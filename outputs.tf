@@ -1,34 +1,104 @@
-output "s3_account_public_access_block_id" {
-  description = "Account-level S3 public access block resource ID."
-  value       = try(aws_s3_account_public_access_block.this[0].id, null)
+output "kms_key_id" {
+  description = "KMS CMK key ID."
+  value       = module.encryption.kms_key_id
 }
 
-output "iam_password_policy_id" {
-  description = "IAM account password policy resource ID."
-  value       = try(aws_iam_account_password_policy.strict[0].id, null)
+output "kms_key_arn" {
+  description = "KMS CMK ARN."
+  value       = module.encryption.kms_key_arn
+}
+
+output "s3_account_public_access_block_id" {
+  description = "Account-level S3 public access block resource ID."
+  value       = module.encryption.s3_account_public_access_block_id
+}
+
+output "sso_permission_set_names" {
+  description = "Names of created SSO permission sets."
+  value       = module.identity.sso_permission_set_names
+}
+
+output "sso_permission_set_arns" {
+  description = "ARNs of created SSO permission sets."
+  value       = module.identity.sso_permission_set_arns
+}
+
+output "break_glass_role_name" {
+  description = "Name of the break-glass role."
+  value       = module.identity.break_glass_role_name
+}
+
+output "break_glass_role_arn" {
+  description = "ARN of the break-glass role."
+  value       = module.identity.break_glass_role_arn
+}
+
+output "break_glass_sns_topic_arn" {
+  description = "SNS topic ARN for break-glass alerts."
+  value       = module.identity.break_glass_sns_topic_arn
+}
+
+output "scp_policy_ids" {
+  description = "IDs of created SCPs."
+  value       = module.scp.scp_policy_ids
+}
+
+output "scp_policy_names" {
+  description = "Names of created SCPs."
+  value       = module.scp.scp_policy_names
+}
+
+output "cloudtrail_id" {
+  description = "Org CloudTrail ARN."
+  value       = module.audit.cloudtrail_id
+}
+
+output "log_bucket_id" {
+  description = "Log bucket name."
+  value       = module.audit.log_bucket_id
+}
+
+output "log_bucket_arn" {
+  description = "Log bucket ARN."
+  value       = module.audit.log_bucket_arn
+}
+
+output "log_bucket_kms_key_arn" {
+  description = "KMS key ARN for the log bucket."
+  value       = module.audit.log_bucket_kms_key_arn
+}
+
+output "config_recorder_id" {
+  description = "Config recorder name."
+  value       = module.audit.config_recorder_id
+}
+
+output "config_rule_names" {
+  description = "Names of deployed Config rules."
+  value       = module.audit.config_rule_names
+}
+
+output "conformance_pack_name" {
+  description = "Name of the HIPAA conformance pack."
+  value       = module.audit.conformance_pack_name
 }
 
 output "guardduty_detector_id" {
   description = "GuardDuty detector ID."
-  value       = try(aws_guardduty_detector.this[0].id, null)
+  value       = module.detection.guardduty_detector_id
 }
 
-output "cloudtrail_id" {
-  description = "CloudTrail trail ARN."
-  value       = try(aws_cloudtrail.this[0].arn, null)
+output "guardduty_org_admin_account_id" {
+  description = "GuardDuty delegated admin account ID."
+  value       = module.detection.guardduty_org_admin_account_id
 }
 
-output "cloudtrail_bucket_arn" {
-  description = "CloudTrail log bucket ARN."
-  value       = try(aws_s3_bucket.cloudtrail[0].arn, null)
+output "securityhub_enabled" {
+  description = "Whether SecurityHub is enabled."
+  value       = module.detection.securityhub_enabled
 }
 
-output "cloudtrail_kms_key_arn" {
-  description = "KMS key used to encrypt CloudTrail logs."
-  value       = try(aws_kms_key.cloudtrail[0].arn, null)
-}
-
-output "default_security_group_ids" {
-  description = "IDs of default security groups that had rules removed."
-  value       = aws_default_security_group.this[*].id
+output "macie_classification_job_id" {
+  description = "Macie classification job ID."
+  value       = module.detection.macie_classification_job_id
 }

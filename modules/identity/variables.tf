@@ -47,7 +47,7 @@ variable "sso_permission_sets" {
 }
 
 variable "sso_group_arns" {
-  description = "Map of permission set name to list of Identity Center group ARNs to assign."
+  description = "Map of permission set name to list of Identity Center group ARNs (or group IDs) to assign."
   type        = map(list(string))
   default     = {}
 }

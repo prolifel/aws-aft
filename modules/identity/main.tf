@@ -4,7 +4,10 @@ locals {
   sso_enabled = var.enabled && var.management_account
   assignments = merge([
     for ps, groups in var.sso_group_arns : {
-      for g in groups : "${ps}:${g}" => { permission_set = ps, group = g }
+      for g in groups : "${ps}:${g}" => {
+        permission_set = ps
+        group_id       = can(regex("^arn:aws:identitystore:::group/(.+)$", g)) ? regex("^arn:aws:identitystore:::group/(.+)$", g)[0] : g
+      }
     }
   ]...)
   break_glass_policy = var.break_glass_policy != "" ? var.break_glass_policy : jsonencode({
@@ -68,7 +71,7 @@ resource "aws_ssoadmin_account_assignment" "this" {
 
   instance_arn       = data.aws_ssoadmin_instances.this[0].arns[0]
   permission_set_arn = aws_ssoadmin_permission_set.this[each.value.permission_set].arn
-  principal_id       = each.value.group
+  principal_id       = each.value.group_id
   principal_type     = "GROUP"
   target_id          = var.sso_target_account_id != "" ? var.sso_target_account_id : data.aws_caller_identity.current.account_id
   target_type        = "AWS_ACCOUNT"
@@ -94,12 +97,15 @@ resource "aws_iam_role" "break_glass" {
   assume_role_policy   = jsonencode({ Version = "2012-10-17", Statement = [] })
   max_session_duration = 3600
 
-  inline_policy {
-    name   = "break-glass-minimal"
-    policy = local.break_glass_policy
-  }
-
   tags = var.tags
+}
+
+resource "aws_iam_role_policy" "break_glass" {
+  count = var.enabled && !var.management_account ? 1 : 0
+
+  name   = "break-glass-minimal"
+  role   = aws_iam_role.break_glass[0].id
+  policy = local.break_glass_policy
 }
 
 resource "aws_sns_topic" "break_glass" {

@@ -1,8 +1,63 @@
 mock_provider "aws" {
+  override_resource {
+    target = module.identity.aws_ssoadmin_permission_set.this["read-only"]
+    values = {
+      arn = "arn:aws:sso:::permissionSet/ssoins-test/ps-000000000000"
+    }
+  }
+
+  override_resource {
+    target = module.identity.aws_ssoadmin_permission_set.this["security-audit"]
+    values = {
+      arn = "arn:aws:sso:::permissionSet/ssoins-test/ps-000000000001"
+    }
+  }
+
+  override_resource {
+    target = module.identity.aws_ssoadmin_permission_set.this["break-glass"]
+    values = {
+      arn = "arn:aws:sso:::permissionSet/ssoins-test/ps-000000000002"
+    }
+  }
+
+  override_resource {
+    target = module.audit.aws_kms_key.logs[0]
+    values = {
+      arn = "arn:aws:kms:ap-southeast-3:123456789012:key/00000000-0000-4000-8000-000000000000"
+    }
+  }
+
+  override_resource {
+    target = module.encryption.aws_kms_key.this[0]
+    values = {
+      arn = "arn:aws:kms:ap-southeast-3:123456789012:key/00000000-0000-4000-8000-000000000001"
+    }
+  }
+
+  override_resource {
+    target = module.identity.aws_sns_topic.break_glass[0]
+    values = {
+      arn = "arn:aws:sns:ap-southeast-3:123456789012:test-break-glass-alerts"
+    }
+  }
+
+  override_resource {
+    target = module.audit.aws_iam_role.config[0]
+    values = {
+      arn = "arn:aws:iam::123456789012:role/test-config"
+    }
+  }
+
   mock_data "aws_ssoadmin_instances" {
     defaults = {
       arns               = ["arn:aws:sso:::instance/ssoins-test"]
       identity_store_ids = ["arn:aws:identitystore:::identitystore/test"]
+    }
+  }
+
+  mock_data "aws_iam_policy_document" {
+    defaults = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
     }
   }
 }
@@ -11,13 +66,17 @@ run "management_plane" {
   command = apply
 
   variables {
-    management_account = true
-    name_prefix        = "test"
-    ephp_ou_ids        = ["ou-test-1"]
+    management_account    = true
+    name_prefix           = "test"
+    ephp_ou_ids           = ["ou-test-1"]
+    sso_target_account_id = "123456789012"
     sso_group_arns = {
-      "read-only" = ["arn:aws:identitystore:::group/test-group"]
+      "read-only" = ["arn:aws:identitystore:::group/00000000-0000-4000-8000-000000000000"]
     }
-    allowed_log_account_ids = ["123456789012"]
+    allowed_log_account_ids    = ["123456789012"]
+    guardduty_admin_account_id = "123456789012"
+    inspector_admin_account_id = "123456789012"
+    macie_admin_account_id     = "123456789012"
   }
 
   assert {
@@ -42,9 +101,9 @@ run "account_plane" {
   command = apply
 
   variables {
-    management_account  = false
-    name_prefix         = "test"
-    log_bucket_name     = "test-logs"
+    management_account      = false
+    name_prefix             = "test"
+    log_bucket_name         = "test-logs"
     allowed_log_account_ids = ["123456789012"]
   }
 
