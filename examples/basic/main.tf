@@ -10,18 +10,25 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = "ap-southeast-3"
 }
 
 module "hardened" {
   source = "../../"
 
-  name_prefix = "acme"
-  tags        = { Environment = "production" }
+  management_account = true
+  name_prefix        = "acme"
+  tags               = { Environment = "production" }
 
-  default_security_group_vpc_ids = []
+  ephp_ou_ids = ["ou-EXAMPLE"]
+
+  sso_group_arns = {
+    "read-only" = ["arn:aws:identitystore:::group/EXAMPLE-GROUP"]
+  }
+
+  kms_admin_arns = ["arn:aws:iam::123456789012:role/security-admin"]
 }
 
-output "cloudtrail_bucket_arn" {
-  value = module.hardened.cloudtrail_bucket_arn
+output "scp_policy_ids" {
+  value = module.hardened.scp_policy_ids
 }

@@ -4,12 +4,16 @@ Contributor guide for the AWS Hardened OpenTofu module.
 
 ## Project Structure & Module Organization
 
-- Root: module sources — `main.tf` (resources), `variables.tf` (inputs), `outputs.tf`, `locals.tf`, `data.tf`, `versions.tf` (provider pins)
+- Root: module composition — `main.tf`, `variables.tf`, `outputs.tf`, `versions.tf`
+- `modules/`: five control families — `identity/`, `scp/`, `audit/`, `encryption/`, `detection/`
 - `examples/basic/`: standalone usage example; keep it runnable with `tofu init && tofu apply`
 - `tests/`: `*.tftest.hcl` smoke tests for `tofu test`
+- `docs/superpowers/`: design spec and implementation plan
 - `README.md`: usage, requirements, and operational notes
 
-Resources are grouped by hardening feature and toggled via `create_*`-style object variables (e.g., `cloudtrail.enabled`). New hardening features get their own variable object and `count`-guarded resources.
+Org-level resources live behind `management_account = true`; per-account resources behind
+`false`. New hardening features belong in the matching family module with their own
+`*_enabled` flag.
 
 ## Build, Test, and Development Commands
 
