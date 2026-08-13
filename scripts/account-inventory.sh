@@ -72,9 +72,21 @@ row_for_account() {
     "$scps_str" "$features"
 }
 
-echo "account_id,account_name,email,status,ou_path,ou_id,is_management,scps,features"
+header="account_id,account_name,email,status,ou_path,ou_id,is_management,scps,features"
+rows=()
 while read -r id name email status; do
   [[ -z "$id" ]] && continue
-  row_for_account "$id" "$name" "$email" "$status"
+  rows+=("$(row_for_account "$id" "$name" "$email" "$status")")
 done < <(aws organizations list-accounts --output json |
   jq -r '.Accounts[] | "\(.Id) \(.Name) \(.Email) \(.Status)"')
+
+if [[ "$MODE" == "--json" ]]; then
+  printf '%s\n' "${rows[@]}" | jq -Rr 'split(",") | {
+    account_id: .[0], account_name: .[1], email: .[2], status: .[3],
+    ou_path: .[4], ou_id: .[5], is_management: (.[6] == "true"),
+    scps: (.[7] | split(";")), features: .[8]
+  }' | jq -s .
+else
+  printf '%s\n' "$header"
+  printf '%s\n' "${rows[@]}"
+fi
