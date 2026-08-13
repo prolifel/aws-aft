@@ -2,6 +2,7 @@
 set -euo pipefail
 
 MODE="${1:---inventory}"
+OUT_DIR="${2:-account_request}"
 
 org_json=$(aws organizations describe-organization --output json)
 mgmt_id=$(jq -r '.Organization.ManagementAccountId // .Organization.MasterAccountId' <<<"$org_json")
@@ -86,6 +87,26 @@ if [[ "$MODE" == "--json" ]]; then
     ou_path: .[4], ou_id: .[5], is_management: (.[6] == "true"),
     scps: (.[7] | split(";")), features: .[8]
   }' | jq -s .
+elif [[ "$MODE" == "--aft-requests" ]]; then
+  mkdir -p "$OUT_DIR"
+  while read -r id name email status; do
+    [[ -z "$id" ]] && continue
+    row_for_account "$id" "$name" "$email" "$status" >/dev/null
+    if [[ "$id" == "$mgmt_id" ]]; then continue; fi
+    leaf_ou="$(parent_of "$id")"
+    if [[ "$leaf_ou" == "$root_id" ]]; then
+      echo "WARN: $id ($name) sits at root, not in an OU; no request file emitted" >&2
+      continue
+    fi
+    cat > "$OUT_DIR/$id.yaml" <<EOF
+account_request:
+  account_name: "$name"
+  email: "$email"
+  managed_org_unit: "$(ou_name_of "$leaf_ou")"
+  account_customizations_name: "aws-hardened"
+EOF
+  done < <(aws organizations list-accounts --output json |
+    jq -r '.Accounts[] | "\(.Id) \(.Name) \(.Email) \(.Status)"')
 else
   printf '%s\n' "$header"
   printf '%s\n' "${rows[@]}"

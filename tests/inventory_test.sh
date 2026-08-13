@@ -35,3 +35,23 @@ fi
 
 echo "PASS: inventory CSV"
 echo "PASS: inventory JSON"
+
+req_dir=$(mktemp -d)
+trap 'rm -rf "$req_dir"' EXIT
+scripts/account-inventory.sh --aft-requests "$req_dir" >/dev/null
+
+if [[ ! -f "$req_dir/222222222222.yaml" || ! -f "$req_dir/333333333333.yaml" ]]; then
+  echo "FAIL: missing request files" >&2
+  exit 1
+fi
+if [[ -f "$req_dir/111111111111.yaml" ]]; then
+  echo "FAIL: request file emitted for management account" >&2
+  exit 1
+fi
+grep -q 'account_customizations_name: "aws-hardened"' "$req_dir/222222222222.yaml"
+grep -q 'managed_org_unit: "ePHI-A-Prod"' "$req_dir/222222222222.yaml"
+grep -q 'managed_org_unit: "ePHI-B"' "$req_dir/333333333333.yaml"
+
+echo "PASS: inventory CSV"
+echo "PASS: inventory JSON"
+echo "PASS: AFT request files"
