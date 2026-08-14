@@ -73,6 +73,23 @@ row_for_account() {
     "$scps_str" "$features"
 }
 
+split_sso_name() {
+  local name="$1" part="$2"
+  if [[ "$name" == *-* ]]; then
+    if [[ "$part" == "first" ]]; then
+      echo "${name%-*}"
+    else
+      echo "${name##*-}"
+    fi
+  else
+    if [[ "$part" == "first" ]]; then
+      echo "$name"
+    else
+      echo ""
+    fi
+  fi
+}
+
 header="account_id,account_name,email,status,ou_path,ou_id,is_management,scps,features"
 rows=()
 while read -r id name email status; do
@@ -99,11 +116,15 @@ elif [[ "$MODE" == "--aft-requests" ]]; then
       continue
     fi
     cat > "$OUT_DIR/$id.yaml" <<EOF
-account_request:
-  account_name: "$name"
-  email: "$email"
-  managed_org_unit: "$(ou_name_of "$leaf_ou")"
-  account_customizations_name: "aws-hardened"
+account_name: "$name"
+email: "$email"
+managed_org_unit: "$(ou_name_of "$leaf_ou")"
+sso_user_email: "$email"
+sso_user_first_name: "$(split_sso_name "$name" first)"
+sso_user_last_name: "$(split_sso_name "$name" last)"
+account_tags:
+  Environment: Dev
+customizations: aws-hardened
 EOF
   done < <(aws organizations list-accounts --output json |
     jq -r '.Accounts[] | "\(.Id) \(.Name) \(.Email) \(.Status)"')

@@ -48,10 +48,12 @@ if [[ -f "$req_dir/111111111111.yaml" ]]; then
   echo "FAIL: request file emitted for management account" >&2
   exit 1
 fi
-grep -q 'account_customizations_name: "aws-hardened"' "$req_dir/222222222222.yaml"
+grep -q 'customizations: aws-hardened' "$req_dir/222222222222.yaml"
 grep -q 'managed_org_unit: "ePHI-A-Prod"' "$req_dir/222222222222.yaml"
 grep -q 'managed_org_unit: "ePHI-B"' "$req_dir/333333333333.yaml"
+grep -q 'sso_user_first_name: "App"' "$req_dir/222222222222.yaml"
+grep -q 'sso_user_last_name: "A"' "$req_dir/222222222222.yaml"
 
 echo "PASS: inventory CSV"
 echo "PASS: inventory JSON"
-echo "PASS: AFT request files"
+echo "PASS: account request files"
