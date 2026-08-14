@@ -10,12 +10,13 @@ drives the whole lifecycle. See the design spec
 |---|---|---|
 | `00-backend/` | once, first | you, manually |
 | `01-management-init-role-and-hardening/` | once, second | you, manually |
-| `accounts/*.yaml` | every account change | GitLab `provision` job |
-| `02-account-init-role/` | per account, automatically | GitLab `customize` job |
-| `03-account-hardening/` | per account, automatically | GitLab `customize` job |
+| `03-accounts-creation/*.yaml` | every account change | GitLab `provision` job |
+| `pipeline/account-init-role/` | per account, automatically | GitLab `customize` job |
+| `pipeline/account-hardening/` | per account, automatically | GitLab `customize` job |
 
 You only ever touch two things by hand: apply `00-backend` + `01-...` once,
-then add/edit `accounts/*.yaml`. Everything else is the pipeline.
+then add/edit `03-accounts-creation/*.yaml`. Everything else is the pipeline;
+`pipeline/` roots are fixed scaffolding you never edit.
 
 ## Step 0: state bucket (manual, once)
 
@@ -25,7 +26,8 @@ cd 00-backend && tofu init && tofu apply
 
 Takes `output.state_bucket_name` and paste it into the `bucket` line of
 `01-management-init-role-and-hardening/versions.tf`,
-`02-account-init-role/versions.tf`, and `03-account-hardening/versions.tf`.
+`pipeline/account-init-role/versions.tf`, and
+`pipeline/account-hardening/versions.tf`.
 No lock table — a single pipeline (`resource_group`) already serializes runs.
 
 ## Step 1: management init + hardening (manual, once)
@@ -58,16 +60,16 @@ schedule (drift + inventory).
 ## Step 3: backfill existing accounts
 
 ```sh
-scripts/account-inventory.sh --aft-requests accounts
+scripts/account-inventory.sh --aft-requests 03-accounts-creation
 ```
 
-Commit the generated `accounts/*.yaml` files and merge. `provision` skips
+Commit the generated `03-accounts-creation/*.yaml` files and merge. `provision` skips
 Service Catalog for accounts that already exist; `customize` bootstraps the
 per-account role and applies the hardening.
 
 ## Step 4: new accounts
 
-Add `accounts/<name>.yaml` in an MR:
+Add `03-accounts-creation/<name>.yaml` in an MR:
 
 ```yaml
 account_name: App-A
@@ -83,18 +85,19 @@ customizations: aws-hardened
 
 `provision` calls `ProvisionProduct` (or `UpdateProvisionedProduct` for
 OU/tag changes), polls until the account is `AVAILABLE`, then `customize`
-runs `02-account-init-role` (creates the `hardened-deploy` role inside the
-new account) and `03-account-hardening` (applies the module). Delete the YAML
-to remove the account.
+runs `pipeline/account-init-role` (creates the `hardened-deploy` role inside
+the new account) and `pipeline/account-hardening` (applies the module).
+Delete the YAML to remove the account.
 
 ## How one account gets hardened
 
 1. `provision` creates the account via Service Catalog Account Factory.
 2. `customize` assumes `AWSControlTowerExecution` in the new account (the
-   only role Control Tower creates there) and applies `02-account-init-role`,
-   which creates `hardened-deploy` trusting the `gitlab-ci` role.
+   only role Control Tower creates there) and applies
+   `pipeline/account-init-role`, which creates `hardened-deploy` trusting the
+   `gitlab-ci` role.
 3. `customize` re-assumes as `hardened-deploy` and applies
-   `03-account-hardening` with per-account state
+   `pipeline/account-hardening` with per-account state
    (`<account_id>/account-hardening.tfstate`).
 
 Both roots are per-account: same code, one state file per account.

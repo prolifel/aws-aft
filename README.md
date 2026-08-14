@@ -33,13 +33,13 @@ do the per-account work. Full runbook: `docs/gitlab-deployment.md`.
 |---|---|---|
 | `00-backend/` | once, first | you, manually — state bucket |
 | `01-management-init-role-and-hardening/` | once, second | you, manually — org hardening + `gitlab-ci` role |
-| `accounts/*.yaml` | every account change | GitLab `provision` job — create/update accounts |
-| `02-account-init-role/` | per account, auto | GitLab `customize` job — per-account deploy role |
-| `03-account-hardening/` | per account, auto | GitLab `customize` job — hardened config |
+| `03-accounts-creation/*.yaml` | every account change | GitLab `provision` job — create/update accounts |
+| `pipeline/account-init-role/` | per account, auto | GitLab `customize` job — per-account deploy role |
+| `pipeline/account-hardening/` | per account, auto | GitLab `customize` job — hardened config |
 
 Manual steps are just the first two: apply `00-backend`, then
 `01-management-init-role-and-hardening` (gives `CI_ROLE_ARN`). After that,
-add/edit `accounts/*.yaml` and merge — the pipeline creates the account and
+add/edit `03-accounts-creation/*.yaml` and merge — the pipeline creates the account and
 hardens it. New accounts get `hardened-deploy` bootstrapped inside them via
 Control Tower's `AWSControlTowerExecution`, then the module runs
 `management_account = false` with per-account state.

@@ -7,8 +7,9 @@ Contributor guide for the AWS Hardened OpenTofu module.
 - Root: module composition — `main.tf`, `variables.tf`, `outputs.tf`, `versions.tf`
 - `modules/`: five control families — `identity/`, `scp/`, `audit/`, `encryption/`, `detection/`
 - `modules/account-init-role/`: per-account deploy role bootstrap (called by `02-account-init-role/`)
-- Deployment roots (run in order): `00-backend/` (state bucket), `01-management-init-role-and-hardening/` (org hardening + `gitlab-ci` role), `02-account-init-role/` (per-account role), `03-account-hardening/` (per-account module)
-- `accounts/`: request YAML files, one per account; created by `scripts/account-inventory.sh --aft-requests`
+- Deployment roots (run in order): `00-backend/` (state bucket), `01-management-init-role-and-hardening/` (org hardening + `gitlab-ci` role)
+- `03-accounts-creation/`: request YAML files, one per account; created by `scripts/account-inventory.sh --aft-requests`
+- `pipeline/`: fixed per-account roots, never edited manually — `account-init-role/` (per-account role), `account-hardening/` (per-account module)
 - `.gitlab-ci.yml` + `ci/`: GitLab pipeline (provision, customize, management-plane, inventory)
 - `scripts/`: `account-inventory.sh`, `account-factory.sh`, `account-hardening.sh`, `delete-default-vpcs.sh`
 - `examples/basic/`: standalone usage example; keep it runnable with `tofu init && tofu apply`
@@ -20,8 +21,8 @@ Org-level resources live behind `management_account = true`; per-account resourc
 `false`. New hardening features belong in the matching family module with their own
 `*_enabled` flag.
 
-Deployment roots `00-`/`01-` are applied manually once; `02-`/`03-` and
-`accounts/` are pipeline-driven (`docs/gitlab-deployment.md`).
+Deployment roots `00-`/`01-` are applied manually once; `03-accounts-creation/`
+and `pipeline/` are pipeline-driven (`docs/gitlab-deployment.md`).
 
 ## Build, Test, and Development Commands
 

@@ -39,7 +39,7 @@ provision:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
       changes:
-        - accounts/**
+        - 03-accounts-creation/**
   script:
     - scripts/account-factory.sh --validate accounts
     - scripts/account-factory.sh --diff accounts
@@ -57,7 +57,7 @@ customize:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
       changes:
-        - accounts/**
+        - 03-accounts-creation/**
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
   script:
     - |

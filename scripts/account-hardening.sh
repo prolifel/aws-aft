@@ -4,8 +4,8 @@ set -euo pipefail
 ACCOUNT_ID="${1:?usage: account-hardening.sh <account-id>}"
 DEPLOY_ROLE="${DEPLOY_ROLE_NAME:-hardened-deploy}"
 CT_EXEC_ROLE="AWSControlTowerExecution"
-BOOTSTRAP_DIR="${BOOTSTRAP_DIR:-02-account-init-role}"
-PLANE_DIR="${PLANE_DIR:-03-account-hardening}"
+BOOTSTRAP_DIR="${BOOTSTRAP_DIR:-pipeline/account-init-role}"
+PLANE_DIR="${PLANE_DIR:-pipeline/account-hardening}"
 SESSION="ci-${CI_PIPELINE_ID:-manual}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
