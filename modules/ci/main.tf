@@ -101,8 +101,8 @@ data "aws_iam_policy_document" "cross_account" {
   count = local.ci_enabled ? 1 : 0
 
   statement {
-    effect    = "Allow"
-    actions   = ["sts:AssumeRole"]
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
     resources = [
       "arn:aws:iam::*:role/AWSControlTowerExecution",
       "arn:aws:iam::*:role/${var.deploy_role_name}",

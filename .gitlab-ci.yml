@@ -1,5 +1,4 @@
-# Template: copy into the deployment repo (e.g. prolifel/aws-aft) together
-# with scripts/ and ci/. Set CI/CD variables:
+# Deployment pipeline for this repo. Set CI/CD variables:
 #   CI_ROLE_ARN       - ARN of the gitlab-ci role created by modules/ci
 #   CONFIG_BUCKET_ARN - ARN of the management-plane handoff config bucket
 #   DELETE_DEFAULT_VPCS - "1" to delete default VPCs in every account (opt-in)
@@ -68,7 +67,7 @@ customize:
       fi
       while read -r account_id; do
         [[ -z "$account_id" ]] && continue
-        scripts/account-plane.sh "$account_id"
+        scripts/account-hardening.sh "$account_id"
       done < account_ids.txt
   artifacts:
     paths:
@@ -86,7 +85,7 @@ management-plane:
       changes:
         - management/**
   script:
-    - cd management
+    - cd 01-management-init-role-and-hardening
     - tofu init
     - tofu apply -auto-approve
 

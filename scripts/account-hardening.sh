@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ACCOUNT_ID="${1:?usage: account-plane.sh <account-id>}"
+ACCOUNT_ID="${1:?usage: account-hardening.sh <account-id>}"
 DEPLOY_ROLE="${DEPLOY_ROLE_NAME:-hardened-deploy}"
 CT_EXEC_ROLE="AWSControlTowerExecution"
-BOOTSTRAP_DIR="${BOOTSTRAP_DIR:-account-bootstrap}"
-PLANE_DIR="${PLANE_DIR:-account-plane}"
+BOOTSTRAP_DIR="${BOOTSTRAP_DIR:-02-account-init-role}"
+PLANE_DIR="${PLANE_DIR:-03-account-hardening}"
 SESSION="ci-${CI_PIPELINE_ID:-manual}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -32,8 +32,8 @@ else
   use_creds "$(assume_role "arn:aws:iam::${ACCOUNT_ID}:role/${CT_EXEC_ROLE}")"
   (
     cd "$BOOTSTRAP_DIR"
-    tofu init -backend-config="key=${ACCOUNT_ID}/bootstrap.tfstate"
-    tofu apply -auto-approve -var "account_id=${ACCOUNT_ID}"
+    tofu init -backend-config="key=${ACCOUNT_ID}/account-init-role.tfstate"
+    tofu apply -auto-approve -var "gitlab_ci_role_arn=${CI_ROLE_ARN:?set CI_ROLE_ARN}"
   )
   use_creds "$(assume_role "arn:aws:iam::${ACCOUNT_ID}:role/${DEPLOY_ROLE}")"
 fi
@@ -44,7 +44,7 @@ fi
 
 (
   cd "$PLANE_DIR"
-  tofu init -backend-config="key=${ACCOUNT_ID}/account-plane.tfstate"
+  tofu init -backend-config="key=${ACCOUNT_ID}/account-hardening.tfstate"
   tofu apply -auto-approve \
     -var "config_bucket_name=${CONFIG_BUCKET_ARN##*:::}"
 )

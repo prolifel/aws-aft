@@ -1,106 +1,73 @@
 # Deploying to every account via GitLab CI/CD
 
-Replaces the AFT runbook. GitLab CI/CD drives the account lifecycle; there is
-no AFT, no CodeBuild, and no CodePipeline. See the design spec
+Replaces the AFT runbook: no AFT, no CodeBuild, no CodePipeline. GitLab CI/CD
+drives the whole lifecycle. See the design spec
 `docs/superpowers/specs/2026-08-14-gitlab-native-design.md`.
 
-## Prerequisites
+## How it fits together
 
-- AWS Control Tower landing zone (Account Factory product in Service Catalog).
-- Self-hosted GitLab with the OIDC ingress from `docs/gitlab-oidc/`.
-- OpenTofu >= 1.8.0 locally for bootstrap, `aws` CLI, `jq`.
+| Folder | When | Who runs it |
+|---|---|---|
+| `00-backend/` | once, first | you, manually |
+| `01-management-init-role-and-hardening/` | once, second | you, manually |
+| `accounts/*.yaml` | every account change | GitLab `provision` job |
+| `02-account-init-role/` | per account, automatically | GitLab `customize` job |
+| `03-account-hardening/` | per account, automatically | GitLab `customize` job |
 
-## 1. AWS side: `modules/ci/`
+You only ever touch two things by hand: apply `00-backend` + `01-...` once,
+then add/edit `accounts/*.yaml`. Everything else is the pipeline.
 
-In the org management account, call the module with `ci_enabled = true`:
+## Step 0: state bucket (manual, once)
 
-```hcl
-module "hardened" {
-  source = "git::https://github.com/example/aws-hardened.git?ref=v1.0.0"
-
-  management_account  = true
-  ci_enabled          = true
-  gitlab_url          = "https://gitlab.example.com"
-  gitlab_project_path = "prolifel/aws-aft"
-  config_bucket_arn   = aws_s3_bucket.config.arn
-}
+```sh
+cd 00-backend && tofu init && tofu apply
 ```
 
-This creates the GitLab OIDC provider and the `gitlab-ci` role. Record the
-role ARN from `output.gitlab_ci_role_arn` for `CI_ROLE_ARN`.
+Takes `output.state_bucket_name` and paste it into the `bucket` line of
+`01-management-init-role-and-hardening/versions.tf`,
+`02-account-init-role/versions.tf`, and `03-account-hardening/versions.tf`.
+No lock table — a single pipeline (`resource_group`) already serializes runs.
 
-## 2. Deployment repo scaffold
+## Step 1: management init + hardening (manual, once)
 
-Repurpose the deployment repo (e.g. `prolifel/aws-aft`):
+Set the required variables (GitLab URL, project path, ePHI OU IDs) via
+`terraform.tfvars` or `-var`, then:
 
-- `.gitlab-ci.yml` and `ci/oidc.sh` — copy from this repo.
-- `scripts/` — copy `account-inventory.sh`, `account-factory.sh`,
-  `account-plane.sh`.
-- `accounts/*.yaml` — one request file per account (see format below).
-- `management/` — management-plane root (this module,
-  `management_account = true`, plus the handoff config bucket + `config.json`
-  object from the old runbook).
-- `account-plane/` — account-plane root:
-
-```hcl
-terraform {
-  backend "s3" {
-    bucket         = "<aft-backend-bucket>"
-    region         = "ap-southeast-3"
-    encrypt        = true
-    dynamodb_table = "<lock-table>"
-    key            = "placeholder" # real key passed at tofu init
-  }
-}
-
-data "aws_s3_object" "config" {
-  bucket = var.config_bucket_name
-  key    = "config.json"
-}
+```sh
+cd 01-management-init-role-and-hardening
+tofu init && tofu apply
 ```
 
-The `key` is overridden per account at `tofu init` by
-`scripts/account-plane.sh` (`${account_id}/account-plane.tfstate`). Use the
-same backend bucket + lock table as the AFT backend (or create a new one in
-the management-plane root).
+This creates: org hardening (SCPs, SSO, org CloudTrail, delegated admins),
+the `gitlab-ci` role, and the handoff config bucket with `config.json`.
+Take `output.gitlab_ci_role_arn` and `output.state_bucket_name` — they become
+the GitLab `CI_ROLE_ARN` and `CONFIG_BUCKET_ARN` variables.
 
-- `account-bootstrap/` — bootstrap root that creates the per-account
-  `hardened-deploy` role trusting the `gitlab-ci` role:
+## Step 2: GitLab variables + pipeline
 
-```hcl
-variable "account_id" {}
+Set CI/CD variables on the project:
 
-data "aws_iam_policy_document" "trust" {
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "AWS"
-      identifiers = [var.gitlab_ci_role_arn] # e.g. from module output
-    }
-  }
-}
+- `CI_ROLE_ARN` — from Step 1 output
+- `CONFIG_BUCKET_ARN` — `arn:aws:s3:::<config-bucket>` from Step 1 output
+- optional `DELETE_DEFAULT_VPCS=1` — deletes default VPCs in every account
+- optional `ALLOW_TERMINATE=1` — allow account deletion via YAML removal
 
-resource "aws_iam_role" "hardened_deploy" {
-  name               = "hardened-deploy"
-  assume_role_policy = data.aws_iam_policy_document.trust.json
-}
+Push the repo with `.gitlab-ci.yml`. The pipeline runs on push and on
+schedule (drift + inventory).
 
-resource "aws_iam_role_policy_attachment" "admin" {
-  role       = aws_iam_role.hardened_deploy.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-}
+## Step 3: backfill existing accounts
+
+```sh
+scripts/account-inventory.sh --aft-requests accounts
 ```
 
-Set `CI_ROLE_ARN` and `CONFIG_BUCKET_ARN` as GitLab CI/CD variables.
+Commit the generated `accounts/*.yaml` files and merge. `provision` skips
+Service Catalog for accounts that already exist; `customize` bootstraps the
+per-account role and applies the hardening.
 
-`hardened-deploy` carries `AdministratorAccess` inside the member account —
-the same effective scope AFT's `AWSAFTExecution` had, and required to run the
-account-plane module (IAM, Config, GuardDuty, SecurityHub, Inspector2, Macie,
-KMS, S3, EC2) and delete default VPCs.
+## Step 4: new accounts
 
-## 3. Request file format
-
-`accounts/<name>.yaml`:
+Add `accounts/<name>.yaml` in an MR:
 
 ```yaml
 account_name: App-A
@@ -114,49 +81,35 @@ account_tags:
 customizations: aws-hardened
 ```
 
-`scripts/account-inventory.sh --aft-requests <dir>` generates these files for
-all existing member accounts (management account and root-level accounts
-skipped with a warning).
+`provision` calls `ProvisionProduct` (or `UpdateProvisionedProduct` for
+OU/tag changes), polls until the account is `AVAILABLE`, then `customize`
+runs `02-account-init-role` (creates the `hardened-deploy` role inside the
+new account) and `03-account-hardening` (applies the module). Delete the YAML
+to remove the account.
 
-## 4. Backfill existing accounts
+## How one account gets hardened
 
-Generate request files, commit them, and merge. The `provision` job skips
-Service Catalog for accounts already in Organizations; the `customize` job
-bootstraps `hardened-deploy` and applies the account plane per account.
+1. `provision` creates the account via Service Catalog Account Factory.
+2. `customize` assumes `AWSControlTowerExecution` in the new account (the
+   only role Control Tower creates there) and applies `02-account-init-role`,
+   which creates `hardened-deploy` trusting the `gitlab-ci` role.
+3. `customize` re-assumes as `hardened-deploy` and applies
+   `03-account-hardening` with per-account state
+   (`<account_id>/account-hardening.tfstate`).
 
-## 5. New accounts
+Both roots are per-account: same code, one state file per account.
 
-Add `accounts/*.yaml` in an MR. The `provision` job calls
-`ProvisionProduct` (or `UpdateProvisionedProduct` for OU/tag changes), polls
-until `AVAILABLE`, then the `customize` job applies the account plane.
-Delete the YAML to remove the account; set `ALLOW_TERMINATE=1` as a CI
-variable to let `provision` terminate stale provisioned products
-(destructive — MR review is the gate).
-
-### Default VPC removal
-
-Optional, matches AFT's `aft_feature_delete_default_vpcs_enabled`: set
-`DELETE_DEFAULT_VPCS=1` as a CI/CD variable. The `customize` job then deletes
-the default VPC (subnets + internet gateway first) in every enabled region of
-each account, before applying the account plane. Only default VPCs
-(`isDefault=true`) are touched; regions without one are skipped.
-
-## 6. Drift and inventory
-
-Scheduled pipelines run `management-plane` (daily) and `customize` (all
-accounts) and `inventory` (report). Manual runs via the GitLab web UI.
-
-## 7. Remove AFT
+## Remove AFT
 
 1. Run the pipeline once so every account is hardened outside AFT.
 2. `tofu destroy` the AFT core in the AFT management account.
-3. Delete `aft/` from this repo (already done) and the old runbook.
-4. Optional: delete the AFT management account.
+3. Optional: delete the AFT management account.
 
 ## Verify
 
-- `curl` the OIDC discovery endpoints (see `docs/gitlab-oidc/`).
-- A scheduled pipeline completes: management-plane apply, customize for every
+- `curl https://gitlab.example.com/.well-known/openid-configuration` and
+  `/oauth/discovery/keys` return JSON (see `docs/gitlab-oidc/`).
+- A scheduled pipeline completes: management apply, customize for every
   account, inventory report.
 - `scripts/account-inventory.sh --inventory` shows every account with the
   expected SCPs and `management_account=false`.
