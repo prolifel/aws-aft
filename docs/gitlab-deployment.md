@@ -84,9 +84,19 @@ resource "aws_iam_role" "hardened_deploy" {
   name               = "hardened-deploy"
   assume_role_policy = data.aws_iam_policy_document.trust.json
 }
+
+resource "aws_iam_role_policy_attachment" "admin" {
+  role       = aws_iam_role.hardened_deploy.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
 ```
 
 Set `CI_ROLE_ARN` and `CONFIG_BUCKET_ARN` as GitLab CI/CD variables.
+
+`hardened-deploy` carries `AdministratorAccess` inside the member account —
+the same effective scope AFT's `AWSAFTExecution` had, and required to run the
+account-plane module (IAM, Config, GuardDuty, SecurityHub, Inspector2, Macie,
+KMS, S3, EC2) and delete default VPCs.
 
 ## 3. Request file format
 
@@ -122,6 +132,14 @@ until `AVAILABLE`, then the `customize` job applies the account plane.
 Delete the YAML to remove the account; set `ALLOW_TERMINATE=1` as a CI
 variable to let `provision` terminate stale provisioned products
 (destructive — MR review is the gate).
+
+### Default VPC removal
+
+Optional, matches AFT's `aft_feature_delete_default_vpcs_enabled`: set
+`DELETE_DEFAULT_VPCS=1` as a CI/CD variable. The `customize` job then deletes
+the default VPC (subnets + internet gateway first) in every enabled region of
+each account, before applying the account plane. Only default VPCs
+(`isDefault=true`) are touched; regions without one are skipped.
 
 ## 6. Drift and inventory
 

@@ -7,6 +7,7 @@ CT_EXEC_ROLE="AWSControlTowerExecution"
 BOOTSTRAP_DIR="${BOOTSTRAP_DIR:-account-bootstrap}"
 PLANE_DIR="${PLANE_DIR:-account-plane}"
 SESSION="ci-${CI_PIPELINE_ID:-manual}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 assume_role() {
   aws sts assume-role --role-arn "$1" --role-session-name "$SESSION" --output json
@@ -35,6 +36,10 @@ else
     tofu apply -auto-approve -var "account_id=${ACCOUNT_ID}"
   )
   use_creds "$(assume_role "arn:aws:iam::${ACCOUNT_ID}:role/${DEPLOY_ROLE}")"
+fi
+
+if [[ "${DELETE_DEFAULT_VPCS:-0}" == "1" ]]; then
+  "$SCRIPT_DIR/delete-default-vpcs.sh"
 fi
 
 (
