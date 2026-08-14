@@ -57,3 +57,6 @@ grep -q 'sso_user_last_name: "A"' "$req_dir/222222222222.yaml"
 echo "PASS: inventory CSV"
 echo "PASS: inventory JSON"
 echo "PASS: account request files"
+
+scripts/account-factory.sh --validate "$req_dir"
+echo "PASS: account request validation"
