@@ -14,7 +14,7 @@ provider "aws" {
 }
 
 module "hardened" {
-  source = "../../"
+  source = "../../modules/hardened"
 
   management_account = true
   name_prefix        = "acme"

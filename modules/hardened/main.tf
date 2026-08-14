@@ -1,5 +1,5 @@
 module "encryption" {
-  source = "./modules/encryption"
+  source = "../encryption"
 
   enabled                        = var.encryption_enabled
   name_prefix                    = var.name_prefix
@@ -11,7 +11,7 @@ module "encryption" {
 }
 
 module "identity" {
-  source = "./modules/identity"
+  source = "../identity"
 
   enabled               = var.identity_enabled
   management_account    = var.management_account
@@ -25,7 +25,7 @@ module "identity" {
 }
 
 module "scp" {
-  source = "./modules/scp"
+  source = "../scp"
 
   enabled              = var.scp_enabled
   management_account   = var.management_account
@@ -35,7 +35,7 @@ module "scp" {
 }
 
 module "audit" {
-  source = "./modules/audit"
+  source = "../audit"
 
   enabled                           = var.audit_enabled
   management_account                = var.management_account
@@ -52,7 +52,7 @@ module "audit" {
 }
 
 module "detection" {
-  source = "./modules/detection"
+  source = "../detection"
 
   enabled                           = var.detection_enabled
   management_account                = var.management_account
@@ -67,7 +67,7 @@ module "detection" {
 }
 
 module "ci" {
-  source = "./modules/ci"
+  source = "../ci"
 
   enabled             = var.ci_enabled
   management_account  = var.management_account

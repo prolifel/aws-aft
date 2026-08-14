@@ -59,7 +59,7 @@ Control Tower notes:
 
 ```hcl
 module "hardened" {
-  source = "git::https://github.com/example/aws-hardened.git?ref=v1.0.0"
+  source = "git::https://github.com/prolifel/aws-aft.git//modules/hardened?ref=v1.0.0"
 
   management_account = false
   name_prefix        = "prod"
@@ -70,7 +70,8 @@ module "hardened" {
 }
 ```
 
-See `examples/basic` for a complete standalone example.
+The module lives in `modules/hardened/`; this repo root is the deployment
+layout. See `examples/basic` for a complete standalone example.
 
 ## Commands
 

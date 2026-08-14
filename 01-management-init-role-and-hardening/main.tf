@@ -1,5 +1,5 @@
 module "hardened" {
-  source = "../"
+  source = "../modules/hardened"
 
   management_account                = true
   ci_enabled                        = true

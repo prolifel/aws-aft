@@ -4,16 +4,16 @@ Contributor guide for the AWS Hardened OpenTofu module.
 
 ## Project Structure & Module Organization
 
-- Root: module composition — `main.tf`, `variables.tf`, `outputs.tf`, `versions.tf`
-- `modules/`: five control families — `identity/`, `scp/`, `audit/`, `encryption/`, `detection/`
-- `modules/account-init-role/`: per-account deploy role bootstrap (called by `02-account-init-role/`)
+- `modules/hardened/`: the aws-hardened module composition — `main.tf`, `variables.tf`, `outputs.tf`, `versions.tf`
+- `modules/`: control families + CI — `identity/`, `scp/`, `audit/`, `encryption/`, `detection/`, `ci/`, `account-init-role/`
 - Deployment roots (run in order): `00-backend/` (state bucket), `01-management-init-role-and-hardening/` (org hardening + `gitlab-ci` role)
 - `03-accounts-creation/`: request YAML files, one per account; created by `scripts/account-inventory.sh --aft-requests`
 - `pipeline/`: fixed per-account roots, never edited manually — `account-init-role/` (per-account role), `account-hardening/` (per-account module)
 - `.gitlab-ci.yml` + `ci/`: GitLab pipeline (provision, customize, management-plane, inventory)
 - `scripts/`: `account-inventory.sh`, `account-factory.sh`, `account-hardening.sh`, `delete-default-vpcs.sh`
 - `examples/basic/`: standalone usage example; keep it runnable with `tofu init && tofu apply`
-- `tests/`: `*.tftest.hcl` smoke tests for `tofu test`
+- `modules/hardened/tests/`: `*.tftest.hcl` smoke tests for `tofu test`
+- `tests/`: Bash test scripts (`inventory_test.sh`, `account_hardening_test.sh`)
 - `docs/superpowers/`: design spec and implementation plan
 - `README.md`: usage, requirements, and operational notes
 
@@ -29,7 +29,7 @@ and `pipeline/` are pipeline-driven (`docs/gitlab-deployment.md`).
 - `tofu init` — download providers and generate the lock file
 - `tofu validate` — check configuration syntax
 - `tofu fmt` — auto-format all `.tf` files
-- `tofu test` — run smoke tests with mocked AWS provider (no credentials needed)
+- `tofu test` — run smoke tests with mocked AWS provider (no credentials needed); run from `modules/hardened/`
 - `tofu plan` / `tofu apply` — preview and apply changes
 
 OpenTofu `>= 1.8.0` required. The AWS provider version is pinned exactly in `versions.tf`; bump it deliberately and verify with `tofu validate`.

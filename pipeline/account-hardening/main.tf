@@ -8,7 +8,7 @@ locals {
 }
 
 module "hardened" {
-  source = "../../"
+  source = "../../modules/hardened"
 
   management_account = false
   name_prefix        = var.name_prefix
