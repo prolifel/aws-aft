@@ -48,6 +48,13 @@ mock_provider "aws" {
     }
   }
 
+  override_resource {
+    target = module.ci.aws_iam_role.gitlab_ci[0]
+    values = {
+      arn = "arn:aws:iam::123456789012:role/test-gitlab-ci"
+    }
+  }
+
   mock_data "aws_ssoadmin_instances" {
     defaults = {
       arns               = ["arn:aws:sso:::instance/ssoins-test"]
@@ -126,5 +133,36 @@ run "account_plane" {
   assert {
     condition     = output.guardduty_detector_id != ""
     error_message = "account plane must create the GuardDuty detector"
+  }
+  assert {
+    condition     = output.gitlab_ci_role_arn == ""
+    error_message = "ci module must be a no-op on the account plane"
+  }
+}
+
+run "ci_management_plane" {
+  command = apply
+
+  variables {
+    management_account    = true
+    name_prefix           = "test"
+    ci_enabled            = true
+    gitlab_url            = "https://gitlab.example.com"
+    gitlab_project_path   = "prolifel/aws-aft"
+    config_bucket_arn     = "arn:aws:s3:::test-config"
+    ephp_ou_ids           = ["ou-test-1"]
+    sso_target_account_id = "123456789012"
+    sso_group_arns = {
+      "read-only" = ["arn:aws:identitystore:::group/00000000-0000-4000-8000-000000000000"]
+    }
+    allowed_log_account_ids    = ["123456789012"]
+    guardduty_admin_account_id = "123456789012"
+    inspector_admin_account_id = "123456789012"
+    macie_admin_account_id     = "123456789012"
+  }
+
+  assert {
+    condition     = output.gitlab_ci_role_arn == "arn:aws:iam::123456789012:role/test-gitlab-ci"
+    error_message = "ci_enabled must create the GitLab CI role on the management plane"
   }
 }

@@ -65,3 +65,17 @@ module "detection" {
   malware_protection_s3_bucket_arns = var.malware_protection_s3_bucket_arns
   macie_s3_bucket_arns              = var.macie_s3_bucket_arns
 }
+
+module "ci" {
+  source = "./modules/ci"
+
+  enabled             = var.ci_enabled
+  management_account  = var.management_account
+  name_prefix         = var.name_prefix
+  tags                = var.tags
+  gitlab_url          = var.gitlab_url
+  gitlab_project_path = var.gitlab_project_path
+  gitlab_branch       = var.gitlab_branch
+  oidc_thumbprint     = var.oidc_thumbprint
+  config_bucket_arn   = var.config_bucket_arn
+}

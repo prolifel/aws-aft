@@ -21,6 +21,42 @@ variable "management_account" {
   type        = bool
 }
 
+variable "ci_enabled" {
+  description = "Whether to create GitLab CI OIDC resources (management account only)."
+  type        = bool
+  default     = false
+}
+
+variable "gitlab_url" {
+  description = "GitLab OIDC issuer base URL, e.g. https://gitlab.example.com."
+  type        = string
+  default     = ""
+}
+
+variable "gitlab_project_path" {
+  description = "GitLab project path for the CI trust condition, e.g. prolifel/aws-aft."
+  type        = string
+  default     = ""
+}
+
+variable "gitlab_branch" {
+  description = "Branch allowed to assume the GitLab CI role."
+  type        = string
+  default     = "main"
+}
+
+variable "oidc_thumbprint" {
+  description = "Optional SHA-1 thumbprint of the GitLab OIDC issuer cert."
+  type        = string
+  default     = null
+}
+
+variable "config_bucket_arn" {
+  description = "ARN of the handoff config bucket used by account-plane jobs."
+  type        = string
+  default     = ""
+}
+
 variable "encryption_enabled" {
   description = "Whether to create encryption resources."
   type        = bool

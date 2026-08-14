@@ -102,3 +102,8 @@ output "macie_classification_job_id" {
   description = "Macie classification job ID."
   value       = module.detection.macie_classification_job_id
 }
+
+output "gitlab_ci_role_arn" {
+  description = "ARN of the GitLab CI role."
+  value       = module.ci.gitlab_ci_role_arn
+}
