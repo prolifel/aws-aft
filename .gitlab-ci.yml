@@ -1,0 +1,98 @@
+# Template: copy into the deployment repo (e.g. prolifel/aws-aft) together
+# with scripts/ and ci/. Set CI/CD variables:
+#   CI_ROLE_ARN       - ARN of the gitlab-ci role created by modules/ci
+#   CONFIG_BUCKET_ARN - ARN of the management-plane handoff config bucket
+
+stages:
+  - account-factory
+  - management-plane
+  - account-plane
+  - inventory
+
+variables:
+  AWS_DEFAULT_REGION: ap-southeast-3
+
+.aws-oidc:
+  image: alpine:3.20
+  id_tokens:
+    OIDC_TOKEN:
+      aud: sts.amazonaws.com
+  before_script:
+    - apk add --no-cache aws-cli jq curl unzip
+    - source ci/oidc.sh
+
+.tofu:
+  image: alpine:3.20
+  id_tokens:
+    OIDC_TOKEN:
+      aud: sts.amazonaws.com
+  before_script:
+    - apk add --no-cache aws-cli jq curl unzip
+    - source ci/oidc.sh
+    - curl -fsSL -o /tmp/tofu.zip https://github.com/opentofu/opentofu/releases/download/v1.8.0/tofu_1.8.0_linux_amd64.zip
+    - unzip -o /tmp/tofu.zip -d /usr/local/bin/
+
+provision:
+  extends: .aws-oidc
+  stage: account-factory
+  resource_group: account-factory
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes:
+        - accounts/**
+  script:
+    - scripts/account-factory.sh --validate accounts
+    - scripts/account-factory.sh --diff accounts
+    - scripts/account-factory.sh accounts
+  artifacts:
+    paths:
+      - account_ids.txt
+    expire_in: 1 day
+
+customize:
+  extends: .tofu
+  stage: account-plane
+  needs:
+    - provision
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes:
+        - accounts/**
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  script:
+    - |
+      if [[ ! -f account_ids.txt ]]; then
+        scripts/account-inventory.sh --json |
+          jq -r '.[] | select(.is_management == false) | .account_id' > account_ids.txt
+      fi
+      while read -r account_id; do
+        [[ -z "$account_id" ]] && continue
+        scripts/account-plane.sh "$account_id"
+      done < account_ids.txt
+  artifacts:
+    paths:
+      - account_ids.txt
+    when: always
+    expire_in: 1 day
+
+management-plane:
+  extends: .tofu
+  stage: management-plane
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes:
+        - management/**
+  script:
+    - cd management
+    - tofu init
+    - tofu apply -auto-approve
+
+inventory:
+  extends: .aws-oidc
+  stage: inventory
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  script:
+    - scripts/account-inventory.sh --inventory
