@@ -10,12 +10,12 @@ drives the whole lifecycle. See the design spec
 |---|---|---|
 | `00-backend/` | once, first | you, manually |
 | `01-management-init-role-and-hardening/` | once, second | you, manually |
-| `03-accounts-creation/*.yaml` | every account change | GitLab `provision` job |
+| `02-accounts-creation/*.yaml` | every account change | GitLab `provision` job |
 | `pipeline/account-init-role/` | per account, automatically | GitLab `customize` job |
 | `pipeline/account-hardening/` | per account, automatically | GitLab `customize` job |
 
 You only ever touch two things by hand: apply `00-backend` + `01-...` once,
-then add/edit `03-accounts-creation/*.yaml`. Everything else is the pipeline;
+then add/edit `02-accounts-creation/*.yaml`. Everything else is the pipeline;
 `pipeline/` roots are fixed scaffolding you never edit.
 
 ## Step 0: state bucket (manual, once)
@@ -60,16 +60,16 @@ schedule (drift + inventory).
 ## Step 3: backfill existing accounts
 
 ```sh
-scripts/account-inventory.sh --aft-requests 03-accounts-creation
+scripts/account-inventory.sh --aft-requests 02-accounts-creation
 ```
 
-Commit the generated `03-accounts-creation/*.yaml` files and merge. `provision` skips
+Commit the generated `02-accounts-creation/*.yaml` files and merge. `provision` skips
 Service Catalog for accounts that already exist; `customize` bootstraps the
 per-account role and applies the hardening.
 
 ## Step 4: new accounts
 
-Add `03-accounts-creation/<name>.yaml` in an MR:
+Add `02-accounts-creation/<name>.yaml` in an MR:
 
 ```yaml
 account_name: App-A

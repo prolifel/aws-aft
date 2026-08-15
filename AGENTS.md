@@ -7,7 +7,7 @@ Contributor guide for the AWS Hardened OpenTofu module.
 - `modules/hardened/`: the aws-hardened module composition — `main.tf`, `variables.tf`, `outputs.tf`, `versions.tf`
 - `modules/`: control families + CI — `identity/`, `scp/`, `audit/`, `encryption/`, `detection/`, `ci/`, `account-init-role/`
 - Deployment roots (run in order): `00-backend/` (state bucket), `01-management-init-role-and-hardening/` (org hardening + `gitlab-ci` role)
-- `03-accounts-creation/`: request YAML files, one per account; created by `scripts/account-inventory.sh --aft-requests`
+- `02-accounts-creation/`: request YAML files, one per account; created by `scripts/account-inventory.sh --aft-requests`
 - `pipeline/`: fixed per-account roots, never edited manually — `account-init-role/` (per-account role), `account-hardening/` (per-account module)
 - `.gitlab-ci.yml` + `ci/`: GitLab pipeline (provision, customize, management-plane, inventory)
 - `scripts/`: `account-inventory.sh`, `account-factory.sh`, `account-hardening.sh`, `delete-default-vpcs.sh`
@@ -21,7 +21,7 @@ Org-level resources live behind `management_account = true`; per-account resourc
 `false`. New hardening features belong in the matching family module with their own
 `*_enabled` flag.
 
-Deployment roots `00-`/`01-` are applied manually once; `03-accounts-creation/`
+Deployment roots `00-`/`01-` are applied manually once; `02-accounts-creation/`
 and `pipeline/` are pipeline-driven (`docs/gitlab-deployment.md`).
 
 ## Build, Test, and Development Commands
