@@ -1,0 +1,26 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    networks:
+      - nginx_proxy
+    volumes:
+      - cloudflared-config:/etc/cloudflared
+    environment:
+      - CLOUDFLARE_TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    command:
+      [
+        "tunnel",
+        "--no-autoupdate",
+        "run",
+        "--token",
+        "${CLOUDFLARE_TUNNEL_TOKEN}",
+      ]
+
+volumes:
+  cloudflared-config:
+
+networks:
+  nginx_proxy:
+    external: true
