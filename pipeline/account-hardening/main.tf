@@ -10,10 +10,11 @@ locals {
 module "hardened" {
   source = "../../modules/hardened"
 
-  management_account = false
-  name_prefix        = var.name_prefix
-  region             = var.region
-  tags               = var.tags
-  log_bucket_name    = local.config.log_bucket_name
-  log_bucket_arn     = local.config.log_bucket_arn
+  management_account        = false
+  name_prefix               = var.name_prefix
+  region                    = var.region
+  tags                      = var.tags
+  log_bucket_name           = local.config.log_bucket_name
+  log_bucket_arn            = local.config.log_bucket_arn
+  break_glass_mgmt_role_arn = local.config.break_glass_mgmt_role_arn
 }
