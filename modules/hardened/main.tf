@@ -1,3 +1,19 @@
+data "aws_caller_identity" "current" {}
+
+data "aws_organizations_organization" "org" {
+  count = var.management_account ? 1 : 0
+}
+
+locals {
+  child_account_ids = var.management_account ? [
+    for a in data.aws_organizations_organization.org[0].accounts :
+    a.id
+    if a.id != data.aws_caller_identity.current.account_id
+  ] : []
+  mgmt_break_glass_role_arn = var.management_account ? "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.break_glass_role_name}" : var.break_glass_mgmt_role_arn
+  break_glass_exempt_arns   = var.management_account ? concat([for id in local.child_account_ids : "arn:aws:iam::${id}:role/${var.break_glass_role_name}"], [local.mgmt_break_glass_role_arn]) : []
+}
+
 module "encryption" {
   source = "../encryption"
 
@@ -13,25 +29,28 @@ module "encryption" {
 module "identity" {
   source = "../identity"
 
-  enabled               = var.identity_enabled
-  management_account    = var.management_account
-  name_prefix           = var.name_prefix
-  tags                  = var.tags
-  sso_permission_sets   = var.sso_permission_sets
-  sso_group_arns        = var.sso_group_arns
-  sso_target_account_id = var.sso_target_account_id
-  iam_password_policy   = var.iam_password_policy
-  break_glass_role_name = var.break_glass_role_name
+  enabled                        = var.identity_enabled
+  management_account             = var.management_account
+  name_prefix                    = var.name_prefix
+  tags                           = var.tags
+  sso_permission_sets            = var.sso_permission_sets
+  sso_group_arns                 = var.sso_group_arns
+  sso_target_account_id          = var.sso_target_account_id
+  iam_password_policy            = var.iam_password_policy
+  break_glass_role_name          = var.break_glass_role_name
+  break_glass_user_name          = var.break_glass_user_name
+  break_glass_mgmt_role_arn      = local.mgmt_break_glass_role_arn
+  break_glass_target_account_ids = local.child_account_ids
 }
 
 module "scp" {
   source = "../scp"
 
-  enabled              = var.scp_enabled
-  management_account   = var.management_account
-  name_prefix          = var.name_prefix
-  ephp_ou_ids          = var.ephp_ou_ids
-  break_glass_role_arn = var.break_glass_role_arn
+  enabled                 = var.scp_enabled
+  management_account      = var.management_account
+  name_prefix             = var.name_prefix
+  ephp_ou_ids             = var.ephp_ou_ids
+  break_glass_exempt_arns = local.break_glass_exempt_arns
 }
 
 module "audit" {

@@ -155,8 +155,14 @@ variable "break_glass_role_name" {
   default     = "break-glass"
 }
 
-variable "break_glass_role_arn" {
-  description = "ARN of the break-glass role; exempted from user-creation and MFA SCP denials."
+variable "break_glass_user_name" {
+  description = "Name of the management-account IAM user allowed to assume the break-glass role."
+  type        = string
+  default     = "break-glass-user"
+}
+
+variable "break_glass_mgmt_role_arn" {
+  description = "ARN of the management-account break-glass role. Child-plane callers must set this so per-account roles trust it. Empty on the management plane derives it from the org."
   type        = string
   default     = ""
 }

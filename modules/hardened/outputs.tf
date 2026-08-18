@@ -38,6 +38,11 @@ output "break_glass_sns_topic_arn" {
   value       = module.identity.break_glass_sns_topic_arn
 }
 
+output "break_glass_user_name" {
+  description = "Name of the management-account break-glass IAM user."
+  value       = module.identity.break_glass_user_name
+}
+
 output "scp_policy_ids" {
   description = "IDs of created SCPs."
   value       = module.scp.scp_policy_ids
