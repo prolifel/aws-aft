@@ -23,11 +23,40 @@ locals {
           "config:GetResourceConfigHistory",
           "ec2:DescribeInstances",
           "rds:DescribeDBInstances",
+          "iam:CreateUser",
+          "iam:CreateLoginProfile",
+          "iam:AttachUserPolicy",
         ]
         Resource = "*"
       },
     ]
   })
+  break_glass_mgmt_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "BreakGlassReadOnly"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:GetBucketLocation",
+          "cloudtrail:LookupEvents",
+          "config:GetResourceConfigHistory",
+          "ec2:DescribeInstances",
+          "rds:DescribeDBInstances",
+        ]
+        Resource = "*"
+      },
+      {
+        Sid      = "BreakGlassAssumeChildren"
+        Effect   = "Allow"
+        Action   = ["sts:AssumeRole"]
+        Resource = [for id in var.break_glass_target_account_ids : "arn:aws:iam::${id}:role/${var.break_glass_role_name}"]
+      },
+    ]
+  })
+  break_glass_mgmt_enabled    = var.enabled && var.management_account
+  break_glass_account_enabled = var.enabled && !var.management_account
 }
 
 data "aws_ssoadmin_instances" "this" {
@@ -91,25 +120,54 @@ resource "aws_iam_account_password_policy" "strict" {
 }
 
 resource "aws_iam_role" "break_glass" {
-  count = var.enabled && !var.management_account ? 1 : 0
+  count = var.enabled ? 1 : 0
 
-  name                 = var.break_glass_role_name
-  assume_role_policy   = jsonencode({ Version = "2012-10-17", Statement = [] })
+  name = var.break_glass_role_name
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = var.management_account ? [{
+      Sid       = "AllowBreakGlassUser"
+      Effect    = "Allow"
+      Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/${var.break_glass_user_name}" }
+      Action    = ["sts:AssumeRole"]
+      Condition = { Bool = { "aws:MultiFactorAuthPresent" = "true" } }
+    }] : var.break_glass_mgmt_role_arn != "" ? [{
+      Sid       = "AllowMgmtBreakGlass"
+      Effect    = "Allow"
+      Principal = { AWS = var.break_glass_mgmt_role_arn }
+      Action    = ["sts:AssumeRole"]
+    }] : []
+  })
   max_session_duration = 3600
 
   tags = var.tags
 }
 
 resource "aws_iam_role_policy" "break_glass" {
-  count = var.enabled && !var.management_account ? 1 : 0
+  count = local.break_glass_account_enabled ? 1 : 0
 
   name   = "break-glass-minimal"
   role   = aws_iam_role.break_glass[0].id
   policy = local.break_glass_policy
 }
 
+resource "aws_iam_role_policy" "break_glass_mgmt" {
+  count = local.break_glass_mgmt_enabled ? 1 : 0
+
+  name   = "break-glass-mgmt"
+  role   = aws_iam_role.break_glass[0].id
+  policy = local.break_glass_mgmt_policy
+}
+
+resource "aws_iam_user" "break_glass" {
+  count = local.break_glass_mgmt_enabled ? 1 : 0
+
+  name = var.break_glass_user_name
+  tags = var.tags
+}
+
 resource "aws_sns_topic" "break_glass" {
-  count = var.enabled && !var.management_account ? 1 : 0
+  count = var.enabled ? 1 : 0
 
   name = "${var.name_prefix}-break-glass-alerts"
 
@@ -117,7 +175,7 @@ resource "aws_sns_topic" "break_glass" {
 }
 
 resource "aws_sns_topic_policy" "break_glass" {
-  count = var.enabled && !var.management_account ? 1 : 0
+  count = var.enabled ? 1 : 0
 
   arn = aws_sns_topic.break_glass[0].arn
   policy = jsonencode({
@@ -135,7 +193,7 @@ resource "aws_sns_topic_policy" "break_glass" {
 }
 
 resource "aws_cloudwatch_event_rule" "break_glass_assume" {
-  count = var.enabled && !var.management_account ? 1 : 0
+  count = var.enabled ? 1 : 0
 
   name = "${var.name_prefix}-break-glass-assume"
   event_pattern = jsonencode({
@@ -152,7 +210,7 @@ resource "aws_cloudwatch_event_rule" "break_glass_assume" {
 }
 
 resource "aws_cloudwatch_event_target" "break_glass_assume" {
-  count = var.enabled && !var.management_account ? 1 : 0
+  count = var.enabled ? 1 : 0
 
   rule      = aws_cloudwatch_event_rule.break_glass_assume[0].name
   target_id = "break-glass-sns"

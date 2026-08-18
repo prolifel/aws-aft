@@ -22,3 +22,8 @@ output "break_glass_sns_topic_arn" {
   description = "SNS topic ARN for break-glass alerts."
   value       = try(aws_sns_topic.break_glass[0].arn, "")
 }
+
+output "break_glass_user_name" {
+  description = "Name of the management-account break-glass IAM user."
+  value       = try(aws_iam_user.break_glass[0].name, "")
+}
