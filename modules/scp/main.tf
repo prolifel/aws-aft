@@ -9,11 +9,11 @@ data "aws_iam_policy_document" "deny_iam_user_creations" {
     actions   = ["iam:CreateUser", "iam:CreateAccessKey"]
     resources = ["*"]
     dynamic "condition" {
-      for_each = var.break_glass_role_arn != "" ? [1] : []
+      for_each = length(var.break_glass_exempt_arns) > 0 ? [1] : []
       content {
         test     = "ArnNotEquals"
         variable = "aws:PrincipalArn"
-        values   = [var.break_glass_role_arn]
+        values   = var.break_glass_exempt_arns
       }
     }
   }
@@ -29,6 +29,14 @@ data "aws_iam_policy_document" "require_mfa" {
       test     = "BoolIfExists"
       variable = "aws:MultiFactorAuthPresent"
       values   = ["false"]
+    }
+    dynamic "condition" {
+      for_each = length(var.break_glass_exempt_arns) > 0 ? [1] : []
+      content {
+        test     = "ArnNotEquals"
+        variable = "aws:PrincipalArn"
+        values   = var.break_glass_exempt_arns
+      }
     }
   }
 }
@@ -103,11 +111,11 @@ data "aws_iam_policy_document" "deny_iam_user_inline_policies" {
     actions   = ["iam:PutUserPolicy", "iam:AttachUserPolicy", "iam:CreateUser"]
     resources = ["*"]
     dynamic "condition" {
-      for_each = var.break_glass_role_arn != "" ? [1] : []
+      for_each = length(var.break_glass_exempt_arns) > 0 ? [1] : []
       content {
         test     = "ArnNotEquals"
         variable = "aws:PrincipalArn"
-        values   = [var.break_glass_role_arn]
+        values   = var.break_glass_exempt_arns
       }
     }
   }

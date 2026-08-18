@@ -20,10 +20,10 @@ variable "ephp_ou_ids" {
   default     = []
 }
 
-variable "break_glass_role_arn" {
-  description = "ARN of the break-glass role; exempted from user-creation and MFA denials. Empty disables the exception."
-  type        = string
-  default     = ""
+variable "break_glass_exempt_arns" {
+  description = "ARNs of break-glass roles exempted from user-creation, inline-policy, and MFA SCP denials. Empty disables the exception."
+  type        = list(string)
+  default     = []
 }
 
 variable "admin_ports" {
