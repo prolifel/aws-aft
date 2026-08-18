@@ -10,7 +10,7 @@ module "hardened" {
   gitlab_project_path               = var.gitlab_project_path
   config_bucket_arn                 = aws_s3_bucket.config.arn
   ephp_ou_ids                       = var.ephp_ou_ids
-  break_glass_role_arn              = var.break_glass_role_arn
+  break_glass_user_name             = var.break_glass_user_name
   sso_target_account_id             = var.sso_target_account_id
   config_delegated_admin_account_id = var.config_delegated_admin_account_id
   guardduty_admin_account_id        = var.guardduty_admin_account_id
@@ -54,6 +54,7 @@ resource "aws_s3_object" "config" {
   content = jsonencode({
     log_bucket_name                   = module.hardened.log_bucket_id
     log_bucket_arn                    = module.hardened.log_bucket_arn
+    break_glass_mgmt_role_arn         = module.hardened.break_glass_role_arn
     config_delegated_admin_account_id = var.config_delegated_admin_account_id
     guardduty_admin_account_id        = var.guardduty_admin_account_id
     inspector_admin_account_id        = var.inspector_admin_account_id

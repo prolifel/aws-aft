@@ -34,10 +34,10 @@ variable "ephp_ou_ids" {
   nullable    = false
 }
 
-variable "break_glass_role_arn" {
-  description = "ARN of the break-glass role; exempted from SCP denials."
+variable "break_glass_user_name" {
+  description = "Name of the management-account IAM user allowed to assume the break-glass role."
   type        = string
-  default     = ""
+  default     = "break-glass-user"
 }
 
 variable "sso_target_account_id" {
