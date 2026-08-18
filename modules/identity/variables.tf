@@ -95,3 +95,21 @@ variable "break_glass_policy" {
   type        = string
   default     = ""
 }
+
+variable "break_glass_user_name" {
+  description = "Name of the management-account IAM user allowed to assume the break-glass role."
+  type        = string
+  default     = "break-glass-user"
+}
+
+variable "break_glass_mgmt_role_arn" {
+  description = "ARN of the management-account break-glass role; used as the child-account role trust principal. Empty keeps the child-account role untrusted."
+  type        = string
+  default     = ""
+}
+
+variable "break_glass_target_account_ids" {
+  description = "Child account IDs whose break-glass roles the management-account break-glass role may assume. Empty on the child plane."
+  type        = list(string)
+  default     = []
+}
