@@ -8,7 +8,7 @@ module "hardened" {
   tags                              = var.tags
   gitlab_url                        = var.gitlab_url
   gitlab_project_path               = var.gitlab_project_path
-  config_bucket_arn                 = aws_s3_bucket.config.arn
+  config_bucket_arn                 = "arn:aws:s3:::${aws_s3_bucket.config.bucket}"
   ephp_ou_ids                       = var.ephp_ou_ids
   break_glass_user_name             = var.break_glass_user_name
   sso_target_account_id             = var.sso_target_account_id
