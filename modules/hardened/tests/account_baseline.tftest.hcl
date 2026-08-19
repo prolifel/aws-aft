@@ -1,55 +1,41 @@
 mock_provider "aws" {
   override_resource {
-    target = module.identity.aws_ssoadmin_permission_set.this["read-only"]
+    target = module.identity.aws_ssoadmin_permission_set.this
     values = {
       arn = "arn:aws:sso:::permissionSet/ssoins-test/ps-000000000000"
     }
   }
 
   override_resource {
-    target = module.identity.aws_ssoadmin_permission_set.this["security-audit"]
-    values = {
-      arn = "arn:aws:sso:::permissionSet/ssoins-test/ps-000000000001"
-    }
-  }
-
-  override_resource {
-    target = module.identity.aws_ssoadmin_permission_set.this["break-glass"]
-    values = {
-      arn = "arn:aws:sso:::permissionSet/ssoins-test/ps-000000000002"
-    }
-  }
-
-  override_resource {
-    target = module.audit.aws_kms_key.logs[0]
+    target = module.audit.aws_kms_key.logs
     values = {
       arn = "arn:aws:kms:ap-southeast-3:123456789012:key/00000000-0000-4000-8000-000000000000"
     }
   }
 
   override_resource {
-    target = module.encryption.aws_kms_key.this[0]
+    target = module.encryption.aws_kms_key.this
     values = {
       arn = "arn:aws:kms:ap-southeast-3:123456789012:key/00000000-0000-4000-8000-000000000001"
     }
   }
 
   override_resource {
-    target = module.identity.aws_sns_topic.break_glass[0]
+    target = module.identity.aws_sns_topic.break_glass
     values = {
       arn = "arn:aws:sns:ap-southeast-3:123456789012:test-break-glass-alerts"
     }
   }
 
   override_resource {
-    target = module.audit.aws_iam_role.config[0]
+    target = module.audit.aws_iam_role.config
     values = {
       arn = "arn:aws:iam::123456789012:role/test-config"
     }
   }
 
   override_resource {
-    target = module.ci.aws_iam_role.gitlab_ci[0]
+    target = module.ci.aws_iam_role.gitlab_ci
     values = {
       arn = "arn:aws:iam::123456789012:role/test-gitlab-ci"
     }
@@ -65,6 +51,41 @@ mock_provider "aws" {
   mock_data "aws_iam_policy_document" {
     defaults = {
       json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  mock_data "aws_organizations_organization" {
+    defaults = {
+      accounts = [
+        {
+          id               = "123456789012"
+          arn              = "arn:aws:organizations::123456789012:account/o-test/123456789012"
+          email            = "mgmt@example.com"
+          name             = "management"
+          joined_method    = "INVITED"
+          joined_timestamp = "2026-01-01T00:00:00Z"
+          state            = "ACTIVE"
+          status           = "ACTIVE"
+        },
+        {
+          id               = "210987654321"
+          arn              = "arn:aws:organizations::123456789012:account/o-test/210987654321"
+          email            = "child@example.com"
+          name             = "child"
+          joined_method    = "INVITED"
+          joined_timestamp = "2026-01-01T00:00:00Z"
+          state            = "ACTIVE"
+          status           = "ACTIVE"
+        },
+      ]
+    }
+  }
+
+  mock_data "aws_caller_identity" {
+    defaults = {
+      account_id = "123456789012"
+      arn        = "arn:aws:iam::123456789012:root"
+      user_id    = "test"
     }
   }
 }
@@ -102,6 +123,22 @@ run "management_plane" {
     condition     = output.log_bucket_id != ""
     error_message = "management plane must create the log bucket"
   }
+  assert {
+    condition     = output.break_glass_role_arn != ""
+    error_message = "management plane must create the break-glass role"
+  }
+  assert {
+    condition     = output.break_glass_user_name == "break-glass-user"
+    error_message = "management plane must create the break-glass IAM user"
+  }
+  assert {
+    condition     = can(regex("user/break-glass-user", module.identity.break_glass_role_trust_policy))
+    error_message = "mgmt break-glass role must trust the designated IAM user"
+  }
+  assert {
+    condition     = can(regex("arn:aws:iam::210987654321:role/break-glass", module.identity.break_glass_mgmt_role_policy))
+    error_message = "mgmt break-glass role must be able to assume child break-glass roles"
+  }
 }
 
 run "account_plane" {
@@ -112,6 +149,7 @@ run "account_plane" {
     name_prefix             = "test"
     log_bucket_name         = "test-logs"
     allowed_log_account_ids = ["123456789012"]
+    break_glass_mgmt_role_arn = "arn:aws:iam::123456789012:role/break-glass"
   }
 
   assert {
@@ -137,6 +175,18 @@ run "account_plane" {
   assert {
     condition     = output.gitlab_ci_role_arn == ""
     error_message = "ci module must be a no-op on the account plane"
+  }
+  assert {
+    condition     = can(regex("arn:aws:iam::123456789012:role/break-glass", module.identity.break_glass_role_trust_policy))
+    error_message = "child break-glass role must trust the management break-glass role"
+  }
+  assert {
+    condition     = can(regex("iam:CreateUser", module.identity.break_glass_role_policy))
+    error_message = "child break-glass role must be able to create IAM users"
+  }
+  assert {
+    condition     = !can(regex("iam:CreateAccessKey", module.identity.break_glass_role_policy))
+    error_message = "child break-glass role must not create access keys"
   }
 }
 
