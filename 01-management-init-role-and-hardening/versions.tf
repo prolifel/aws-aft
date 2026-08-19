@@ -2,9 +2,9 @@ terraform {
   required_version = ">= 1.8.0"
 
   backend "s3" {
-    bucket  = "aws-hardened-state-<MANAGEMENT_ACCOUNT_ID>-<REGION>" # paste from 00-backend output
+    bucket  = "aws-hardened-state-373901294232-us-west-2" # paste from 00-backend output
     key     = "management-init-role-and-hardening/terraform.tfstate"
-    region  = "ap-southeast-3"
+    region  = "us-west-2"
     encrypt = true
   }
 
@@ -14,4 +14,8 @@ terraform {
       version = "6.58.0"
     }
   }
+}
+
+provider "aws" {
+  region = var.region
 }
