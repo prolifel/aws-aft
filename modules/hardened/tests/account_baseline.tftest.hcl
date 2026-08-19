@@ -145,10 +145,10 @@ run "account_plane" {
   command = apply
 
   variables {
-    management_account      = false
-    name_prefix             = "test"
-    log_bucket_name         = "test-logs"
-    allowed_log_account_ids = ["123456789012"]
+    management_account        = false
+    name_prefix               = "test"
+    log_bucket_name           = "test-logs"
+    allowed_log_account_ids   = ["123456789012"]
     break_glass_mgmt_role_arn = "arn:aws:iam::123456789012:role/break-glass"
   }
 

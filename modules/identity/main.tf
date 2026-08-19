@@ -131,7 +131,7 @@ resource "aws_iam_role" "break_glass" {
       Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/${var.break_glass_user_name}" }
       Action    = ["sts:AssumeRole"]
       Condition = { Bool = { "aws:MultiFactorAuthPresent" = "true" } }
-    }] : var.break_glass_mgmt_role_arn != "" ? [{
+      }] : var.break_glass_mgmt_role_arn != "" ? [{
       Sid       = "AllowMgmtBreakGlass"
       Effect    = "Allow"
       Principal = { AWS = var.break_glass_mgmt_role_arn }
