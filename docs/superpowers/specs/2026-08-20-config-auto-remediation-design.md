@@ -125,7 +125,7 @@ validate` cannot catch a wrong doc ARN/name — that surfaces at apply time.
 - `cd modules/scp && tofu init -backend=false && tofu validate` (unchanged).
 - `tofu fmt` clean.
 
-## Amendment 1 (2026-08-20): verified doc names + custom ingress-swap doc + SCP ipv4 removal
+## Amendment 1 (2026-08-20): verified doc names + custom ingress-swap doc + SCP admin-port removal
 
 Approved deltas after live verification against SSM (us-east-1) and design review:
 
@@ -154,12 +154,12 @@ Approved deltas after live verification against SSM (us-east-1) and design revie
    - `RESTRICTED_INCOMING_TRAFFIC` remediation entry uses the custom doc:
      static `AutomationAssumeRole` + `PrivateCidrs` + `AdminPorts`, resource
      `SecurityGroupId = RESOURCE_ID`.
-3. **SCP change (`modules/scp/main.tf`):** remove only the IPv4 admin-port
-   deny — delete `data "aws_iam_policy_document" "deny_public_admin_ports_ipv4"`
-   and its entry in `combined.source_policy_documents`. Keep the IPv6 deny
-   (`deny_public_admin_ports_ipv6`, `::/0`) and the `admin_ports` variable.
-   Tradeoff accepted: public IPv4 admin ports are no longer blocked at org
-   level; Config auto-remediation (account plane) is the control.
+3. **SCP change (`modules/scp/main.tf`):** remove the admin-port denials
+   entirely — delete both `deny_public_admin_ports_ipv4` (`0.0.0.0/0`) and
+   `deny_public_admin_ports_ipv6` (`::/0`) data documents and their entries in
+   `combined.source_policy_documents`; delete the now-unused `admin_ports`
+   variable. Tradeoff accepted: public admin ports are no longer blocked at
+   org level; Config auto-remediation (account plane) is the control.
 4. **Tests:** account-plane run asserts 4 remediations
    (`ENCRYPTED_VOLUMES`, `S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED`,
    `RESTRICTED_INCOMING_TRAFFIC`, plus the custom-doc SSM resource exists);
