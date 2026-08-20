@@ -43,14 +43,14 @@ output "break_glass_user_name" {
   value       = module.identity.break_glass_user_name
 }
 
-output "scp_policy_ids" {
-  description = "IDs of created SCPs."
-  value       = module.scp.scp_policy_ids
+output "scp_policy_id" {
+  description = "ID of the consolidated hardening SCP."
+  value       = module.scp.scp_policy_id
 }
 
-output "scp_policy_names" {
-  description = "Names of created SCPs."
-  value       = module.scp.scp_policy_names
+output "scp_policy_name" {
+  description = "Name of the consolidated hardening SCP."
+  value       = module.scp.scp_policy_name
 }
 
 # note: cloudtrail org enabled via control tower
