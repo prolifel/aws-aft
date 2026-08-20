@@ -34,6 +34,6 @@ module "hardened" {
   kms_admin_arns = ["arn:aws:iam::123456789012:role/security-admin"]
 }
 
-output "scp_policy_ids" {
-  value = module.hardened.scp_policy_ids
+output "scp_policy_id" {
+  value = module.hardened.scp_policy_id
 }
