@@ -40,6 +40,7 @@ resource "aws_organizations_organization" "org" {
     "inspector2.amazonaws.com",
     "macie.amazonaws.com",
     "member.org.stacksets.cloudformation.amazonaws.com",
+    "securityhub.amazonaws.com",
     "sso.amazonaws.com"
   ]
   enabled_policy_types     = ["SERVICE_CONTROL_POLICY"]
