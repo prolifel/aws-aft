@@ -124,3 +124,43 @@ validate` cannot catch a wrong doc ARN/name — that surfaces at apply time.
 - `cd modules/hardened && tofu test` — 3 runs pass, new remediation asserts.
 - `cd modules/scp && tofu init -backend=false && tofu validate` (unchanged).
 - `tofu fmt` clean.
+
+## Amendment 1 (2026-08-20): verified doc names + custom ingress-swap doc + SCP ipv4 removal
+
+Approved deltas after live verification against SSM (us-east-1) and design review:
+
+1. **Verified managed documents (replaces the caveat):**
+   - `ENCRYPTED_VOLUMES` → `AWSConfigRemediation-EnableEbsEncryptionByDefault` (no parameters).
+   - `S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED` → `AWS-EnableS3BucketEncryption`
+     (`BucketName` ← resource value, `SSEAlgorithm` = `AES256`).
+   - `RDS_STORAGE_ENCRYPTED` → **dropped from defaults** — no AWS-managed
+     automation exists for RDS storage encryption; caller supplies a doc name
+     in `remediation_rules` if wanted.
+2. **Custom SSM document `remediation-swap-public-admin-ingress`** for
+   `RESTRICTED_INCOMING_TRAFFIC` (account plane only):
+   - `aws_ssm_document` with one `aws:executeScript` (Python) step.
+   - Parameters: `GroupId`, `AutomationAssumeRole`, `PrivateCidrs`
+     (default `10.0.0.0/8,172.16.0.0/16,192.168.0.0/24`), `AdminPorts`
+     (default `22,3389,1433,3306`).
+   - For each IPv4 ingress permission containing `0.0.0.0/0` whose
+     protocol/port range is `-1` (all) or overlaps any admin port: revoke the
+     rule, then re-authorize the same protocol + port range from each private
+     CIDR, skipping when an identical rule already exists (idempotent, re-run
+     safe). IPv6 (`::/0`) public admin-port rules: revoked without
+     replacement. Non-admin-port public rules: untouched.
+   - `aws_iam_role.remediation` (trust `ssm.amazonaws.com`) with inline policy
+     `ec2:DescribeSecurityGroups`, `ec2:RevokeSecurityGroupIngress`,
+     `ec2:AuthorizeSecurityGroupIngress`.
+   - `RESTRICTED_INCOMING_TRAFFIC` remediation entry uses the custom doc:
+     static `AutomationAssumeRole` + `PrivateCidrs` + `AdminPorts`, resource
+     `SecurityGroupId = RESOURCE_ID`.
+3. **SCP change (`modules/scp/main.tf`):** remove only the IPv4 admin-port
+   deny — delete `data "aws_iam_policy_document" "deny_public_admin_ports_ipv4"`
+   and its entry in `combined.source_policy_documents`. Keep the IPv6 deny
+   (`deny_public_admin_ports_ipv6`, `::/0`) and the `admin_ports` variable.
+   Tradeoff accepted: public IPv4 admin ports are no longer blocked at org
+   level; Config auto-remediation (account plane) is the control.
+4. **Tests:** account-plane run asserts 4 remediations
+   (`ENCRYPTED_VOLUMES`, `S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED`,
+   `RESTRICTED_INCOMING_TRAFFIC`, plus the custom-doc SSM resource exists);
+   management-plane run asserts none.
