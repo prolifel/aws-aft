@@ -121,41 +121,28 @@ data "aws_iam_policy_document" "deny_iam_user_inline_policies" {
   }
 }
 
-locals {
-  scp_policies = {
-    DenyIAMUserCreations      = data.aws_iam_policy_document.deny_iam_user_creations.json
-    RequireMFA                = data.aws_iam_policy_document.require_mfa.json
-    DenyUnencryptedResources  = data.aws_iam_policy_document.deny_unencrypted_resources.json
-    DenyPublicAdminPorts      = data.aws_iam_policy_document.deny_public_admin_ports.json
-    DenyIAMUserInlinePolicies = data.aws_iam_policy_document.deny_iam_user_inline_policies.json
-  }
-
-  scp_attachments = merge([
-    for scp_name, policy_id in aws_organizations_policy.this : {
-      for ou in var.ephp_ou_ids : "${scp_name}:${ou}" => {
-        policy_id = policy_id.id
-        ou_id     = ou
-      }
-    }
-  ]...)
+data "aws_iam_policy_document" "combined" {
+  source_policy_documents = [
+    data.aws_iam_policy_document.deny_iam_user_creations.json,
+    data.aws_iam_policy_document.require_mfa.json,
+    data.aws_iam_policy_document.deny_unencrypted_resources.json,
+    data.aws_iam_policy_document.deny_public_admin_ports.json,
+    data.aws_iam_policy_document.deny_iam_user_inline_policies.json,
+  ]
 }
 
-resource "aws_organizations_policy" "this" {
-  for_each = local.scp_enabled ? local.scp_policies : {}
+resource "aws_organizations_policy" "hardening" {
+  count = local.scp_enabled ? 1 : 0
 
-  name        = "${var.name_prefix}-${each.key}"
-  description = "HIPAA 164.312 control: ${each.key}"
+  name        = "${var.name_prefix}-hardening"
+  description = "Consolidated HIPAA 164.312 control SCP"
   type        = "SERVICE_CONTROL_POLICY"
-  content     = each.value
-
-  tags = {
-    Control = each.key
-  }
+  content     = data.aws_iam_policy_document.combined.json
 }
 
 resource "aws_organizations_policy_attachment" "this" {
-  for_each = local.scp_enabled ? local.scp_attachments : {}
+  for_each = local.scp_enabled ? { for ou in var.ephp_ou_ids : ou => ou } : {}
 
-  policy_id = each.value.policy_id
-  target_id = each.value.ou_id
+  policy_id = aws_organizations_policy.hardening[0].id
+  target_id = each.key
 }

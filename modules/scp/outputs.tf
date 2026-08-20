@@ -1,9 +1,9 @@
-output "scp_policy_ids" {
-  description = "IDs of created SCPs."
-  value       = values(aws_organizations_policy.this)[*].id
+output "scp_policy_id" {
+  description = "ID of the consolidated hardening SCP, empty when disabled."
+  value       = local.scp_enabled ? aws_organizations_policy.hardening[0].id : ""
 }
 
-output "scp_policy_names" {
-  description = "Names of created SCPs."
-  value       = values(aws_organizations_policy.this)[*].name
+output "scp_policy_name" {
+  description = "Name of the consolidated hardening SCP, empty when disabled."
+  value       = local.scp_enabled ? aws_organizations_policy.hardening[0].name : ""
 }
