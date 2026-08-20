@@ -1,17 +1,22 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  guardduty_admin = var.guardduty_admin_account_id != "" ? var.guardduty_admin_account_id : data.aws_caller_identity.current.account_id
-  inspector_admin = var.inspector_admin_account_id != "" ? var.inspector_admin_account_id : data.aws_caller_identity.current.account_id
-  macie_admin     = var.macie_admin_account_id != "" ? var.macie_admin_account_id : data.aws_caller_identity.current.account_id
+  guardduty_admin   = var.guardduty_admin_account_id != "" ? var.guardduty_admin_account_id : data.aws_caller_identity.current.account_id
+  separate_gd_admin = var.guardduty_admin_account_id != "" && var.guardduty_admin_account_id != data.aws_caller_identity.current.account_id
+  inspector_admin   = var.inspector_admin_account_id != "" ? var.inspector_admin_account_id : data.aws_caller_identity.current.account_id
+  macie_admin       = var.macie_admin_account_id != "" ? var.macie_admin_account_id : data.aws_caller_identity.current.account_id
 }
 
 resource "aws_guardduty_detector" "org" {
-  count = var.enabled && var.management_account ? 1 : 0
+  count = var.enabled && var.management_account && !local.separate_gd_admin ? 1 : 0
 
-  provider                     = aws.guardduty
   enable                       = true
   finding_publishing_frequency = "FIFTEEN_MINUTES"
+}
+
+data "aws_guardduty_detector" "admin" {
+  count    = var.enabled && var.management_account && local.separate_gd_admin ? 1 : 0
+  provider = aws.guardduty
 }
 
 resource "aws_guardduty_organization_admin_account" "this" {
@@ -21,9 +26,8 @@ resource "aws_guardduty_organization_admin_account" "this" {
 }
 
 resource "aws_guardduty_organization_configuration" "this" {
-  count = var.enabled && var.management_account ? 1 : 0
+  count = var.enabled && var.management_account && !local.separate_gd_admin ? 1 : 0
 
-  provider                         = aws.guardduty
   detector_id                      = aws_guardduty_detector.org[0].id
   auto_enable_organization_members = "ALL"
 
@@ -31,6 +35,16 @@ resource "aws_guardduty_organization_configuration" "this" {
     aws_guardduty_detector.org,
     aws_guardduty_organization_admin_account.this,
   ]
+}
+
+resource "aws_guardduty_organization_configuration" "admin" {
+  count = var.enabled && var.management_account && local.separate_gd_admin ? 1 : 0
+
+  provider                         = aws.guardduty
+  detector_id                      = data.aws_guardduty_detector.admin[0].id
+  auto_enable_organization_members = "ALL"
+
+  depends_on = [aws_guardduty_organization_admin_account.this]
 }
 
 resource "aws_securityhub_account" "org" {
