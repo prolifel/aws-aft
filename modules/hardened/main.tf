@@ -73,8 +73,8 @@ module "detection" {
   source = "../detection"
 
   providers = {
-    aws           = aws
-    aws.guardduty = aws.guardduty
+    aws                 = aws
+    aws.delegated_admin = aws.delegated_admin
   }
 
   enabled                           = var.detection_enabled
@@ -82,6 +82,7 @@ module "detection" {
   name_prefix                       = var.name_prefix
   tags                              = var.tags
   guardduty_admin_account_id        = var.guardduty_admin_account_id
+  securityhub_admin_account_id      = var.securityhub_admin_account_id
   inspector_admin_account_id        = var.inspector_admin_account_id
   macie_admin_account_id            = var.macie_admin_account_id
   securityhub_standards             = var.securityhub_standards

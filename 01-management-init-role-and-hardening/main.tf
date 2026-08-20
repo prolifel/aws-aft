@@ -2,24 +2,25 @@ module "hardened" {
   source = "../modules/hardened"
 
   providers = {
-    aws           = aws
-    aws.guardduty = aws.guardduty
+    aws                 = aws
+    aws.delegated_admin = aws.delegated_admin
   }
 
-  management_account         = true
-  ci_enabled                 = true
-  name_prefix                = var.name_prefix
-  region                     = var.region
-  tags                       = var.tags
-  gitlab_url                 = var.gitlab_url
-  gitlab_project_path        = var.gitlab_project_path
-  config_bucket_arn          = "arn:aws:s3:::${aws_s3_bucket.config.bucket}"
-  ephp_ou_ids                = var.ephp_ou_ids
-  break_glass_user_name      = var.break_glass_user_name
-  sso_target_account_id      = var.sso_target_account_id
-  guardduty_admin_account_id = var.guardduty_admin_account_id
-  inspector_admin_account_id = var.inspector_admin_account_id
-  macie_admin_account_id     = var.macie_admin_account_id
+  management_account           = true
+  ci_enabled                   = true
+  name_prefix                  = var.name_prefix
+  region                       = var.region
+  tags                         = var.tags
+  gitlab_url                   = var.gitlab_url
+  gitlab_project_path          = var.gitlab_project_path
+  config_bucket_arn            = "arn:aws:s3:::${aws_s3_bucket.config.bucket}"
+  ephp_ou_ids                  = var.ephp_ou_ids
+  break_glass_user_name        = var.break_glass_user_name
+  sso_target_account_id        = var.sso_target_account_id
+  guardduty_admin_account_id   = var.guardduty_admin_account_id
+  securityhub_admin_account_id = var.securityhub_admin_account_id
+  inspector_admin_account_id   = var.inspector_admin_account_id
+  macie_admin_account_id       = var.macie_admin_account_id
 }
 
 data "aws_organizations_organization" "org" {}

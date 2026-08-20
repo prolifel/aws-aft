@@ -3,6 +3,8 @@ data "aws_caller_identity" "current" {}
 locals {
   guardduty_admin   = var.guardduty_admin_account_id != "" ? var.guardduty_admin_account_id : data.aws_caller_identity.current.account_id
   separate_gd_admin = var.guardduty_admin_account_id != "" && var.guardduty_admin_account_id != data.aws_caller_identity.current.account_id
+  securityhub_admin = var.securityhub_admin_account_id != "" ? var.securityhub_admin_account_id : data.aws_caller_identity.current.account_id
+  separate_sh_admin = var.securityhub_admin_account_id != "" && var.securityhub_admin_account_id != data.aws_caller_identity.current.account_id
   inspector_admin   = var.inspector_admin_account_id != "" ? var.inspector_admin_account_id : data.aws_caller_identity.current.account_id
   macie_admin       = var.macie_admin_account_id != "" ? var.macie_admin_account_id : data.aws_caller_identity.current.account_id
 }
@@ -16,7 +18,7 @@ resource "aws_guardduty_detector" "org" {
 
 data "aws_guardduty_detector" "admin" {
   count    = var.enabled && var.management_account && local.separate_gd_admin ? 1 : 0
-  provider = aws.guardduty
+  provider = aws.delegated_admin
 }
 
 resource "aws_guardduty_organization_admin_account" "this" {
@@ -40,7 +42,7 @@ resource "aws_guardduty_organization_configuration" "this" {
 resource "aws_guardduty_organization_configuration" "admin" {
   count = var.enabled && var.management_account && local.separate_gd_admin ? 1 : 0
 
-  provider                         = aws.guardduty
+  provider                         = aws.delegated_admin
   detector_id                      = data.aws_guardduty_detector.admin[0].id
   auto_enable_organization_members = "ALL"
 
@@ -48,15 +50,40 @@ resource "aws_guardduty_organization_configuration" "admin" {
 }
 
 resource "aws_securityhub_account" "org" {
+  count = var.enabled && var.management_account && !local.separate_sh_admin ? 1 : 0
+}
+
+resource "aws_securityhub_account" "admin" {
+  count    = var.enabled && var.management_account && local.separate_sh_admin ? 1 : 0
+  provider = aws.delegated_admin
+}
+
+resource "aws_securityhub_organization_admin_account" "this" {
   count = var.enabled && var.management_account ? 1 : 0
+
+  admin_account_id = local.securityhub_admin
+
+  depends_on = [aws_securityhub_account.admin]
 }
 
 resource "aws_securityhub_organization_configuration" "this" {
-  count = var.enabled && var.management_account ? 1 : 0
+  count = var.enabled && var.management_account && !local.separate_sh_admin ? 1 : 0
 
   auto_enable = true
 
   depends_on = [aws_securityhub_account.org]
+}
+
+resource "aws_securityhub_organization_configuration" "admin" {
+  count = var.enabled && var.management_account && local.separate_sh_admin ? 1 : 0
+
+  provider    = aws.delegated_admin
+  auto_enable = true
+
+  depends_on = [
+    aws_securityhub_account.admin,
+    aws_securityhub_organization_admin_account.this,
+  ]
 }
 
 resource "aws_inspector2_delegated_admin_account" "this" {

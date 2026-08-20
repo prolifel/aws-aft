@@ -91,7 +91,7 @@ mock_provider "aws" {
 }
 
 mock_provider "aws" {
-  alias = "guardduty"
+  alias = "delegated_admin"
 }
 
 run "management_plane" {

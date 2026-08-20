@@ -21,7 +21,7 @@ provider "aws" {
 }
 
 provider "aws" {
-  alias  = "guardduty"
+  alias  = "delegated_admin"
   region = var.region
 
   assume_role {

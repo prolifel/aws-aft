@@ -54,6 +54,12 @@ variable "guardduty_admin_account_id" {
   default     = ""
 }
 
+variable "securityhub_admin_account_id" {
+  description = "Security Hub delegated admin account ID."
+  type        = string
+  default     = ""
+}
+
 variable "inspector_admin_account_id" {
   description = "Inspector2 delegated admin account ID."
   type        = string

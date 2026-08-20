@@ -17,8 +17,8 @@ module "hardened" {
   source = "../../modules/hardened"
 
   providers = {
-    aws           = aws
-    aws.guardduty = aws
+    aws                 = aws
+    aws.delegated_admin = aws
   }
 
   management_account = true
