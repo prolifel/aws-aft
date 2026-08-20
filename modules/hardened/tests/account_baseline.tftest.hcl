@@ -112,8 +112,8 @@ run "management_plane" {
   }
 
   assert {
-    condition     = length(output.scp_policy_ids) == 5
-    error_message = "management plane must create exactly 5 SCPs"
+    condition     = output.scp_policy_id != "" && output.scp_policy_name == "test-hardening"
+    error_message = "management plane must create exactly one SCP"
   }
   assert {
     condition     = length(output.sso_permission_set_names) == 3
@@ -153,7 +153,7 @@ run "account_plane" {
   }
 
   assert {
-    condition     = length(output.scp_policy_ids) == 0
+    condition     = output.scp_policy_id == ""
     error_message = "account plane must not create SCPs"
   }
   assert {
