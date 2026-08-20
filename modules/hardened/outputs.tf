@@ -53,11 +53,7 @@ output "scp_policy_names" {
   value       = module.scp.scp_policy_names
 }
 
-output "cloudtrail_id" {
-  description = "Org CloudTrail ARN."
-  value       = module.audit.cloudtrail_id
-}
-
+# note: cloudtrail org enabled via control tower
 output "log_bucket_id" {
   description = "Log bucket name."
   value       = module.audit.log_bucket_id

@@ -1,21 +1,25 @@
 module "hardened" {
   source = "../modules/hardened"
 
-  management_account                = true
-  ci_enabled                        = true
-  name_prefix                       = var.name_prefix
-  region                            = var.region
-  tags                              = var.tags
-  gitlab_url                        = var.gitlab_url
-  gitlab_project_path               = var.gitlab_project_path
-  config_bucket_arn                 = "arn:aws:s3:::${aws_s3_bucket.config.bucket}"
-  ephp_ou_ids                       = var.ephp_ou_ids
-  break_glass_user_name             = var.break_glass_user_name
-  sso_target_account_id             = var.sso_target_account_id
-  config_delegated_admin_account_id = var.config_delegated_admin_account_id
-  guardduty_admin_account_id        = var.guardduty_admin_account_id
-  inspector_admin_account_id        = var.inspector_admin_account_id
-  macie_admin_account_id            = var.macie_admin_account_id
+  providers = {
+    aws           = aws
+    aws.guardduty = aws.guardduty
+  }
+
+  management_account         = true
+  ci_enabled                 = true
+  name_prefix                = var.name_prefix
+  region                     = var.region
+  tags                       = var.tags
+  gitlab_url                 = var.gitlab_url
+  gitlab_project_path        = var.gitlab_project_path
+  config_bucket_arn          = "arn:aws:s3:::${aws_s3_bucket.config.bucket}"
+  ephp_ou_ids                = var.ephp_ou_ids
+  break_glass_user_name      = var.break_glass_user_name
+  sso_target_account_id      = var.sso_target_account_id
+  guardduty_admin_account_id = var.guardduty_admin_account_id
+  inspector_admin_account_id = var.inspector_admin_account_id
+  macie_admin_account_id     = var.macie_admin_account_id
 }
 
 data "aws_organizations_organization" "org" {}
@@ -24,6 +28,22 @@ data "aws_caller_identity" "current" {}
 
 locals {
   account_id = data.aws_caller_identity.current.account_id
+}
+
+resource "aws_organizations_organization" "org" {
+  aws_service_access_principals = [
+    "cloudtrail.amazonaws.com",
+    "config.amazonaws.com",
+    "controltower.amazonaws.com",
+    "guardduty.amazonaws.com",
+    "inspector2.amazonaws.com",
+    "macie.amazonaws.com",
+    "member.org.stacksets.cloudformation.amazonaws.com",
+    "sso.amazonaws.com"
+  ]
+  enabled_policy_types     = ["SERVICE_CONTROL_POLICY"]
+  feature_set              = "ALL"
+  return_organization_only = null
 }
 
 resource "aws_s3_bucket" "config" {
@@ -52,12 +72,11 @@ resource "aws_s3_object" "config" {
   bucket = aws_s3_bucket.config.id
   key    = "config.json"
   content = jsonencode({
-    log_bucket_name                   = module.hardened.log_bucket_id
-    log_bucket_arn                    = module.hardened.log_bucket_arn
-    break_glass_mgmt_role_arn         = module.hardened.break_glass_role_arn
-    config_delegated_admin_account_id = var.config_delegated_admin_account_id
-    guardduty_admin_account_id        = var.guardduty_admin_account_id
-    inspector_admin_account_id        = var.inspector_admin_account_id
-    macie_admin_account_id            = var.macie_admin_account_id
+    log_bucket_name            = module.hardened.log_bucket_id
+    log_bucket_arn             = module.hardened.log_bucket_arn
+    break_glass_mgmt_role_arn  = module.hardened.break_glass_role_arn
+    guardduty_admin_account_id = var.guardduty_admin_account_id
+    inspector_admin_account_id = var.inspector_admin_account_id
+    macie_admin_account_id     = var.macie_admin_account_id
   })
 }

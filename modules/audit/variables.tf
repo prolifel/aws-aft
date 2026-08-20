@@ -49,11 +49,7 @@ variable "allowed_log_account_ids" {
   default     = []
 }
 
-variable "config_delegated_admin_account_id" {
-  description = "Account ID to register as AWS Config delegated administrator."
-  type        = string
-  default     = ""
-}
+# note: aws config enabled via control tower
 
 variable "config_rules" {
   description = "AWS Config managed rule identifiers to deploy on the account plane."

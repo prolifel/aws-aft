@@ -16,6 +16,11 @@ provider "aws" {
 module "hardened" {
   source = "../../modules/hardened"
 
+  providers = {
+    aws           = aws
+    aws.guardduty = aws
+  }
+
   management_account = true
   name_prefix        = "acme"
   tags               = { Environment = "production" }

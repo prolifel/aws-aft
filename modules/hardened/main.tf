@@ -56,22 +56,26 @@ module "scp" {
 module "audit" {
   source = "../audit"
 
-  enabled                           = var.audit_enabled
-  management_account                = var.management_account
-  name_prefix                       = var.name_prefix
-  region                            = var.region
-  tags                              = var.tags
-  log_bucket_name                   = var.log_bucket_name
-  log_bucket_arn                    = var.log_bucket_arn
-  object_lock_retention_days        = var.object_lock_retention_days
-  allowed_log_account_ids           = var.allowed_log_account_ids
-  config_delegated_admin_account_id = var.config_delegated_admin_account_id
-  config_rules                      = var.config_rules
-  config_rule_parameters            = var.config_rule_parameters
+  enabled                    = var.audit_enabled
+  management_account         = var.management_account
+  name_prefix                = var.name_prefix
+  region                     = var.region
+  tags                       = var.tags
+  log_bucket_name            = var.log_bucket_name
+  log_bucket_arn             = var.log_bucket_arn
+  object_lock_retention_days = var.object_lock_retention_days
+  allowed_log_account_ids    = var.allowed_log_account_ids
+  config_rules               = var.config_rules
+  config_rule_parameters     = var.config_rule_parameters
 }
 
 module "detection" {
   source = "../detection"
+
+  providers = {
+    aws           = aws
+    aws.guardduty = aws.guardduty
+  }
 
   enabled                           = var.detection_enabled
   management_account                = var.management_account

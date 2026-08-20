@@ -130,44 +130,9 @@ resource "aws_kms_alias" "logs" {
   target_key_id = aws_kms_key.logs[0].key_id
 }
 
-resource "aws_cloudtrail" "org" {
-  count = var.enabled && var.management_account ? 1 : 0
+# note: organization cloudtrail enabled via control tower
 
-  name                          = "${var.name_prefix}-org-trail"
-  s3_bucket_name                = aws_s3_bucket.logs[0].id
-  include_global_service_events = true
-  is_multi_region_trail         = true
-  enable_log_file_validation    = true
-  is_organization_trail         = true
-  kms_key_id                    = aws_kms_key.logs[0].arn
-
-  event_selector {
-    read_write_type           = "All"
-    include_management_events = true
-  }
-
-  event_selector {
-    read_write_type           = "All"
-    include_management_events = false
-    data_resource {
-      type   = "AWS::S3::Object"
-      values = ["arn:aws:s3:::"]
-    }
-    data_resource {
-      type   = "AWS::DynamoDB::Table"
-      values = ["arn:aws:dynamodb"]
-    }
-  }
-
-  tags = var.tags
-}
-
-resource "aws_organizations_delegated_administrator" "config" {
-  count = var.enabled && var.management_account && var.config_delegated_admin_account_id != "" ? 1 : 0
-
-  account_id        = var.config_delegated_admin_account_id
-  service_principal = "config.amazonaws.com"
-}
+# note: aws config enabled via control tower
 
 resource "aws_s3_bucket" "log_access" {
   count = var.enabled && var.management_account ? 1 : 0

@@ -10,6 +10,11 @@ locals {
 module "hardened" {
   source = "../../modules/hardened"
 
+  providers = {
+    aws           = aws
+    aws.guardduty = aws
+  }
+
   management_account        = false
   name_prefix               = var.name_prefix
   region                    = var.region

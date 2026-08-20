@@ -19,3 +19,12 @@ terraform {
 provider "aws" {
   region = var.region
 }
+
+provider "aws" {
+  alias  = "guardduty"
+  region = var.region
+
+  assume_role {
+    role_arn = var.guardduty_admin_account_id != "" ? "arn:aws:iam::${var.guardduty_admin_account_id}:role/AWSControlTowerExecution" : null
+  }
+}

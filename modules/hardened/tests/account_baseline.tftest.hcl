@@ -90,6 +90,10 @@ mock_provider "aws" {
   }
 }
 
+mock_provider "aws" {
+  alias = "guardduty"
+}
+
 run "management_plane" {
   command = apply
 
@@ -114,10 +118,6 @@ run "management_plane" {
   assert {
     condition     = length(output.sso_permission_set_names) == 3
     error_message = "management plane must create the 3 default SSO permission sets"
-  }
-  assert {
-    condition     = output.cloudtrail_id != ""
-    error_message = "management plane must create the org CloudTrail"
   }
   assert {
     condition     = output.log_bucket_id != ""

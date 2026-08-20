@@ -9,6 +9,7 @@ locals {
 resource "aws_guardduty_detector" "org" {
   count = var.enabled && var.management_account ? 1 : 0
 
+  provider                     = aws.guardduty
   enable                       = true
   finding_publishing_frequency = "FIFTEEN_MINUTES"
 }
@@ -22,6 +23,7 @@ resource "aws_guardduty_organization_admin_account" "this" {
 resource "aws_guardduty_organization_configuration" "this" {
   count = var.enabled && var.management_account ? 1 : 0
 
+  provider                         = aws.guardduty
   detector_id                      = aws_guardduty_detector.org[0].id
   auto_enable_organization_members = "ALL"
 

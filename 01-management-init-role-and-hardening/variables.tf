@@ -46,11 +46,7 @@ variable "sso_target_account_id" {
   default     = ""
 }
 
-variable "config_delegated_admin_account_id" {
-  description = "Config delegated admin account ID."
-  type        = string
-  default     = ""
-}
+# note: aws config enabled via control tower
 
 variable "guardduty_admin_account_id" {
   description = "GuardDuty delegated admin account ID."
@@ -68,4 +64,10 @@ variable "macie_admin_account_id" {
   description = "Macie delegated admin account ID."
   type        = string
   default     = ""
+}
+
+variable "organization_id" {
+  description = "ID of AWS Organization"
+  type        = string
+  nullable    = false
 }
