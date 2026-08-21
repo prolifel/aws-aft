@@ -19,27 +19,27 @@ data "aws_iam_policy_document" "deny_iam_user_creations" {
   }
 }
 
-data "aws_iam_policy_document" "require_mfa" {
-  statement {
-    sid       = "DenyWithoutMFA"
-    effect    = "Deny"
-    actions   = ["*"]
-    resources = ["*"]
-    condition {
-      test     = "BoolIfExists"
-      variable = "aws:MultiFactorAuthPresent"
-      values   = ["false"]
-    }
-    dynamic "condition" {
-      for_each = length(var.break_glass_exempt_arns) > 0 ? [1] : []
-      content {
-        test     = "ArnNotEquals"
-        variable = "aws:PrincipalArn"
-        values   = var.break_glass_exempt_arns
-      }
-    }
-  }
-}
+# data "aws_iam_policy_document" "require_mfa" {
+#   statement {
+#     sid       = "DenyWithoutMFA"
+#     effect    = "Deny"
+#     actions   = ["*"]
+#     resources = ["*"]
+#     condition {
+#       test     = "BoolIfExists"
+#       variable = "aws:MultiFactorAuthPresent"
+#       values   = ["false"]
+#     }
+#     dynamic "condition" {
+#       for_each = length(var.break_glass_exempt_arns) > 0 ? [1] : []
+#       content {
+#         test     = "ArnNotEquals"
+#         variable = "aws:PrincipalArn"
+#         values   = var.break_glass_exempt_arns
+#       }
+#     }
+#   }
+# }
 
 data "aws_iam_policy_document" "deny_unencrypted_resources" {
   statement {
@@ -77,33 +77,6 @@ data "aws_iam_policy_document" "deny_unencrypted_resources" {
   }
 }
 
-data "aws_iam_policy_document" "deny_public_admin_ports" {
-  dynamic "statement" {
-    for_each = toset([for p in var.admin_ports : tostring(p)])
-    content {
-      sid       = "DenyPublicPort${statement.value}"
-      effect    = "Deny"
-      actions   = ["ec2:AuthorizeSecurityGroupIngress"]
-      resources = ["*"]
-      condition {
-        test     = "IpAddressIfExists"
-        variable = "ec2:SourceIp"
-        values   = ["0.0.0.0/0", "::/0"]
-      }
-      condition {
-        test     = "NumericLessThanEquals"
-        variable = "ec2:FromPort"
-        values   = [statement.value]
-      }
-      condition {
-        test     = "NumericGreaterThanEquals"
-        variable = "ec2:ToPort"
-        values   = [statement.value]
-      }
-    }
-  }
-}
-
 data "aws_iam_policy_document" "deny_iam_user_inline_policies" {
   statement {
     sid       = "DenyIAMUserInlinePolicies"
@@ -124,9 +97,8 @@ data "aws_iam_policy_document" "deny_iam_user_inline_policies" {
 data "aws_iam_policy_document" "combined" {
   source_policy_documents = [
     data.aws_iam_policy_document.deny_iam_user_creations.json,
-    data.aws_iam_policy_document.require_mfa.json,
+    # data.aws_iam_policy_document.require_mfa.json,
     data.aws_iam_policy_document.deny_unencrypted_resources.json,
-    data.aws_iam_policy_document.deny_public_admin_ports.json,
     data.aws_iam_policy_document.deny_iam_user_inline_policies.json,
   ]
 }

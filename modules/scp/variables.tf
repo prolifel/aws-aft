@@ -25,9 +25,3 @@ variable "break_glass_exempt_arns" {
   type        = list(string)
   default     = []
 }
-
-variable "admin_ports" {
-  description = "Ports that must never be opened to 0.0.0.0/0."
-  type        = list(number)
-  default     = [22, 3389, 1433, 3306]
-}
