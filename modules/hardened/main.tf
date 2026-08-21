@@ -67,6 +67,7 @@ module "audit" {
   allowed_log_account_ids    = var.allowed_log_account_ids
   config_rules               = var.config_rules
   config_rule_parameters     = var.config_rule_parameters
+  remediation_rules          = var.remediation_rules
 }
 
 module "detection" {

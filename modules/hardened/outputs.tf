@@ -84,6 +84,16 @@ output "conformance_pack_name" {
   value       = module.audit.conformance_pack_name
 }
 
+output "remediation_rule_names" {
+  description = "Names of rules with attached remediation."
+  value       = module.audit.remediation_rule_names
+}
+
+output "custom_remediation_doc_name" {
+  description = "Name of the custom admin-port ingress remediation document."
+  value       = module.audit.custom_remediation_doc_name
+}
+
 output "guardduty_detector_id" {
   description = "GuardDuty detector ID."
   value       = module.detection.guardduty_detector_id

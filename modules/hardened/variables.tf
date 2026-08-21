@@ -253,6 +253,7 @@ variable "config_rules" {
     "RESTRICTED_COMMON_PORTS",
     "ALB_HTTP_TO_HTTPS_REDIRECTION_CHECK",
     "EC2_INSTANCE_MANAGED_BY_SSM",
+    "RESTRICTED_INCOMING_TRAFFIC",
   ]
 }
 
@@ -260,6 +261,26 @@ variable "config_rule_parameters" {
   description = "Optional JSON input parameters per Config rule name."
   type        = map(string)
   default     = {}
+}
+
+variable "remediation_rules" {
+  description = "AWS Config auto-remediation per managed rule: SSM document, automatic flag, static and resource parameters."
+  type = map(object({
+    ssm_document        = string
+    automatic           = optional(bool, true)
+    static_parameters   = optional(map(string), {})
+    resource_parameters = optional(map(string), {})
+  }))
+  default = {
+    ENCRYPTED_VOLUMES = {
+      ssm_document = "AWSConfigRemediation-EnableEbsEncryptionByDefault"
+    }
+    S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED = {
+      ssm_document        = "AWS-EnableS3BucketEncryption"
+      resource_parameters = { BucketName = "RESOURCE_ID" }
+      static_parameters   = { SSEAlgorithm = "AES256" }
+    }
+  }
 }
 
 variable "guardduty_admin_account_id" {
