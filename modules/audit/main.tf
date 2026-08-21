@@ -410,8 +410,8 @@ resource "aws_iam_role_policy" "remediation" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "ec2:DescribeSecurityGroups",
           "ec2:RevokeSecurityGroupIngress",
           "ec2:AuthorizeSecurityGroupIngress",
