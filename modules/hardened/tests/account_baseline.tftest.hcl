@@ -116,6 +116,10 @@ run "management_plane" {
     error_message = "management plane must create exactly one SCP"
   }
   assert {
+    condition     = length(output.remediation_rule_names) == 0
+    error_message = "management plane must not create remediations"
+  }
+  assert {
     condition     = length(output.sso_permission_set_names) == 3
     error_message = "management plane must create the 3 default SSO permission sets"
   }
@@ -155,6 +159,14 @@ run "account_plane" {
   assert {
     condition     = output.scp_policy_id == ""
     error_message = "account plane must not create SCPs"
+  }
+  assert {
+    condition     = length(output.remediation_rule_names) == 3
+    error_message = "account plane must attach remediations to the 3 default rules"
+  }
+  assert {
+    condition     = output.custom_remediation_doc_name != ""
+    error_message = "account plane must create the custom admin-port ingress remediation document"
   }
   assert {
     condition     = output.break_glass_role_name != ""
