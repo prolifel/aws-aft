@@ -29,3 +29,13 @@ output "conformance_pack_name" {
   description = "Name of the HIPAA conformance pack."
   value       = try(aws_config_conformance_pack.hipaa[0].name, "")
 }
+
+output "remediation_rule_names" {
+  description = "Names of rules with attached remediation."
+  value       = var.enabled && !var.management_account ? concat(keys(local.remediation_entries), local.restricted_ingress_remediation ? ["RESTRICTED_INCOMING_TRAFFIC"] : []) : []
+}
+
+output "custom_remediation_doc_name" {
+  description = "Name of the custom admin-port ingress remediation document."
+  value       = var.enabled && !var.management_account ? aws_ssm_document.remediation_swap_public_admin_ingress[0].name : ""
+}
