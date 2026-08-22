@@ -11,7 +11,11 @@ locals {
   remediation_private_cidrs = ["10.0.0.0/8", "172.16.0.0/16", "192.168.0.0/24"]
   remediation_admin_ports   = [22, 3389, 1433, 3306]
   remediation_entries = {
-    for k, v in var.remediation_rules : k => v
+    for k, v in var.remediation_rules : k => merge(v, {
+      static_parameters = merge(v.static_parameters, {
+        AutomationAssumeRole = aws_iam_role.remediation[0].arn
+      })
+    })
     if var.enabled && !var.management_account && contains(var.config_rules, k)
   }
   restricted_ingress_remediation = var.enabled && !var.management_account && contains(var.config_rules, "RESTRICTED_INCOMING_TRAFFIC")
@@ -415,6 +419,10 @@ resource "aws_iam_role_policy" "remediation" {
           "ec2:DescribeSecurityGroups",
           "ec2:RevokeSecurityGroupIngress",
           "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:EnableEbsEncryptionByDefault",
+          "ec2:GetEbsEncryptionByDefault",
+          "s3:PutBucketEncryption",
+          "s3:GetEncryptionConfiguration",
         ]
         Resource = "*"
       },
