@@ -1,7 +1,5 @@
 stages: # List of stages for jobs, and their order of execution
   - build
-  - test
-  - deploy
 
 debug-oidc:
   stage: .pre
@@ -15,3 +13,8 @@ debug-oidc:
     paths:
       - oidc_token.txt
     expire_in: 10 mins
+
+asu:
+  stage: build
+  script:
+    - echo "ahay"
