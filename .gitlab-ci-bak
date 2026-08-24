@@ -10,21 +10,7 @@ stages:
   - inventory
 
 variables:
-  AWS_DEFAULT_REGION: ap-southeast-3
-
-.aws-oidc:
-  image:
-    name: amazon/aws-cli:latest
-    entrypoint: [""]
-  id_tokens:
-    OIDC_TOKEN:
-      aud: https://gitlab.prolifel.com
-  before_script:
-    - mkdir -p ~/.aws
-    - echo "${OIDC_TOKEN}" > /tmp/web_identity_token
-    # - echo "$OIDC_TOKEN" | cut -d. -f2 | base64 -d 2>/dev/null | jq
-    - echo -e "[profile oidc]\nrole_arn=${CI_ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" > ~/.aws/config
-    - export AWS_PROFILE=oidc
+  AWS_DEFAULT_REGION: us-west-2
 
 .tofu:
   image:
@@ -34,17 +20,26 @@ variables:
     OIDC_TOKEN:
       aud: https://gitlab.prolifel.com
   before_script:
-    - mkdir -p ~/.aws
-    - echo "${OIDC_TOKEN}" > /tmp/web_identity_token
-    # - echo "$OIDC_TOKEN" | cut -d. -f2 | base64 -d 2>/dev/null | jq
-    - echo -e "[profile oidc]\nrole_arn=${CI_ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" > ~/.aws/config
-    - export AWS_PROFILE=oidc
+    - creds=$(aws sts assume-role-with-web-identity \
+    - --role-arn "$CI_ROLE_ARN" \
+    - --role-session-name "ci-$CI_PIPELINE_ID" \
+    - --web-identity-token "$OIDC_TOKEN" \
+    - --duration-seconds 3600 \
+    - --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]')
+    - export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+    - AWS_ACCESS_KEY_ID=$(printf '%s' "$creds" | jq -r .Credentials.AccessKeyId)
+    - AWS_SECRET_ACCESS_KEY=$(printf '%s' "$creds" | jq -r .Credentials.SecretAccessKey)
+    - AWS_SESSION_TOKEN=$(printf '%s' "$creds" | jq -r .Credentials.SessionToken)
+    # - mkdir -p ~/.aws
+    # - echo "${OIDC_TOKEN}" > /tmp/web_identity_token
+    # - echo -e "[profile oidc]\nrole_arn=${CI_ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" > ~/.aws/config
+    # - export AWS_PROFILE=oidc
     - dnf install -y unzip
     - curl -fsSL -o /tmp/tofu.zip https://github.com/opentofu/opentofu/releases/download/v1.8.0/tofu_1.8.0_linux_amd64.zip
     - unzip -o /tmp/tofu.zip -d /usr/local/bin/
 
 provision:
-  extends: .aws-oidc
+  extends: .tofu
   stage: account-factory
   resource_group: account-factory
   rules:
@@ -101,7 +96,7 @@ management-plane:
     - tofu apply -auto-approve
 
 inventory:
-  extends: .aws-oidc
+  extends: .tofu
   stage: inventory
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
