@@ -7,7 +7,7 @@ resource "aws_iam_openid_connect_provider" "gitlab" {
   count = local.ci_enabled ? 1 : 0
 
   url             = var.gitlab_url
-  client_id_list  = ["sts.amazonaws.com"]
+  client_id_list  = [var.gitlab_url]
   thumbprint_list = var.oidc_thumbprint != null ? [var.oidc_thumbprint] : []
 }
 
@@ -24,7 +24,7 @@ data "aws_iam_policy_document" "gitlab_ci_trust" {
     condition {
       test     = "StringEquals"
       variable = "${local.oidc_host}:aud"
-      values   = ["sts.amazonaws.com"]
+      values   = [var.gitlab_url]
     }
     condition {
       test     = "StringLike"
