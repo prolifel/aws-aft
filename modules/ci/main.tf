@@ -7,7 +7,7 @@ resource "aws_iam_openid_connect_provider" "gitlab" {
   count = local.ci_enabled ? 1 : 0
 
   url             = var.gitlab_url
-  client_id_list  = [local.oidc_host]
+  client_id_list  = [var.gitlab_url]
   thumbprint_list = var.oidc_thumbprint != null ? [var.oidc_thumbprint] : []
 }
 
