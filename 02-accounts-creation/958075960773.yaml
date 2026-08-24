@@ -7,3 +7,5 @@ sso_user_last_name: "account"
 account_tags:
   Environment: Dev
 customizations: aws-hardened
+
+# trigger
