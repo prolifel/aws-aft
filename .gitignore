@@ -49,4 +49,8 @@ terraform.rc
 # Local dependency clones (AGENTS.md local-first rule)
 .data/
 
+# Local agent skills and tooling
+.agents/
+.claude/
+
 # End of https://www.toptal.com/developers/gitignore/api/terraform

@@ -74,8 +74,6 @@ resource "aws_s3_object" "config" {
   bucket = aws_s3_bucket.config.id
   key    = "config.json"
   content = jsonencode({
-    log_bucket_name            = module.hardened.log_bucket_id
-    log_bucket_arn             = module.hardened.log_bucket_arn
     break_glass_mgmt_role_arn  = module.hardened.break_glass_role_arn
     guardduty_admin_account_id = var.guardduty_admin_account_id
     inspector_admin_account_id = var.inspector_admin_account_id

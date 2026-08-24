@@ -62,9 +62,9 @@ row_for_account() {
   scps_str="$(printf '%s\n' ${scps[@]+"${scps[@]}"} | sort | paste -sd';' -)"
 
   if [[ "$id" == "$mgmt_id" ]]; then
-    features="management_account=true;identity=true;scp=true;audit=true;encryption=true;detection=true"
+    features="management_account=true;identity=true;scp=true;encryption=true;detection=true"
   else
-    features="management_account=false;identity=true;scp=true;audit=true;encryption=true;detection=true"
+    features="management_account=false;identity=true;scp=true;encryption=true;detection=true"
   fi
 
   printf '%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \

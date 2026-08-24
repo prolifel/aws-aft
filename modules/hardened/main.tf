@@ -53,23 +53,6 @@ module "scp" {
   break_glass_exempt_arns = local.break_glass_exempt_arns
 }
 
-module "audit" {
-  source = "../audit"
-
-  enabled                    = var.audit_enabled
-  management_account         = var.management_account
-  name_prefix                = var.name_prefix
-  region                     = var.region
-  tags                       = var.tags
-  log_bucket_name            = var.log_bucket_name
-  log_bucket_arn             = var.log_bucket_arn
-  object_lock_retention_days = var.object_lock_retention_days
-  allowed_log_account_ids    = var.allowed_log_account_ids
-  config_rules               = var.config_rules
-  config_rule_parameters     = var.config_rule_parameters
-  remediation_rules          = var.remediation_rules
-}
-
 module "detection" {
   source = "../detection"
 

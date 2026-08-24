@@ -75,12 +75,6 @@ variable "scp_enabled" {
   default     = true
 }
 
-variable "audit_enabled" {
-  description = "Whether to create audit resources."
-  type        = bool
-  default     = true
-}
-
 variable "detection_enabled" {
   description = "Whether to create detection resources."
   type        = bool
@@ -209,78 +203,6 @@ variable "ephp_ou_ids" {
   description = "OU IDs to attach the SCPs to."
   type        = list(string)
   default     = []
-}
-
-variable "log_bucket_name" {
-  description = "Name of the shared log bucket. Empty auto-generates on the management account."
-  type        = string
-  default     = ""
-}
-
-variable "log_bucket_arn" {
-  description = "ARN of the shared log bucket (required on the account plane)."
-  type        = string
-  default     = ""
-}
-
-variable "object_lock_retention_days" {
-  description = "Object Lock COMPLIANCE retention period in days."
-  type        = number
-  default     = 2190
-}
-
-variable "allowed_log_account_ids" {
-  description = "Account IDs allowed to deliver Config snapshots into the log bucket."
-  type        = list(string)
-  default     = []
-}
-
-# note: aws config enabled via control tower
-
-variable "config_rules" {
-  description = "AWS Config managed rule identifiers to deploy on the account plane."
-  type        = list(string)
-  default = [
-    "IAM_POLICY_NO_STATEMENTS_WITH_ADMIN_ACCESS",
-    "IAM_USER_NO_POLICIES_CHECK",
-    "ENCRYPTED_VOLUMES",
-    "S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED",
-    "RDS_STORAGE_ENCRYPTED",
-    "IAM_USER_MFA_ENABLED",
-    "ROOT_ACCOUNT_MFA_ENABLED",
-    "VPC_DEFAULT_SECURITY_GROUP_CLOSED",
-    "RESTRICTED_SSH",
-    "RESTRICTED_COMMON_PORTS",
-    "ALB_HTTP_TO_HTTPS_REDIRECTION_CHECK",
-    "EC2_INSTANCE_MANAGED_BY_SSM",
-    "RESTRICTED_INCOMING_TRAFFIC",
-  ]
-}
-
-variable "config_rule_parameters" {
-  description = "Optional JSON input parameters per Config rule name."
-  type        = map(string)
-  default     = {}
-}
-
-variable "remediation_rules" {
-  description = "AWS Config auto-remediation per managed rule: SSM document, automatic flag, static and resource parameters."
-  type = map(object({
-    ssm_document        = string
-    automatic           = optional(bool, true)
-    static_parameters   = optional(map(string), {})
-    resource_parameters = optional(map(string), {})
-  }))
-  default = {
-    ENCRYPTED_VOLUMES = {
-      ssm_document = "AWSConfigRemediation-EnableEbsEncryptionByDefault"
-    }
-    S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED = {
-      ssm_document        = "AWS-EnableS3BucketEncryption"
-      resource_parameters = { BucketName = "RESOURCE_ID" }
-      static_parameters   = { SSEAlgorithm = "AES256" }
-    }
-  }
 }
 
 variable "guardduty_admin_account_id" {

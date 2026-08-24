@@ -46,8 +46,6 @@ variable "sso_target_account_id" {
   default     = ""
 }
 
-# note: aws config enabled via control tower
-
 variable "guardduty_admin_account_id" {
   description = "GuardDuty delegated admin account ID."
   type        = string

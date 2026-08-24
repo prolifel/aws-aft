@@ -53,47 +53,6 @@ output "scp_policy_name" {
   value       = module.scp.scp_policy_name
 }
 
-# note: cloudtrail org enabled via control tower
-output "log_bucket_id" {
-  description = "Log bucket name."
-  value       = module.audit.log_bucket_id
-}
-
-output "log_bucket_arn" {
-  description = "Log bucket ARN."
-  value       = module.audit.log_bucket_arn
-}
-
-output "log_bucket_kms_key_arn" {
-  description = "KMS key ARN for the log bucket."
-  value       = module.audit.log_bucket_kms_key_arn
-}
-
-output "config_recorder_id" {
-  description = "Config recorder name."
-  value       = module.audit.config_recorder_id
-}
-
-output "config_rule_names" {
-  description = "Names of deployed Config rules."
-  value       = module.audit.config_rule_names
-}
-
-output "conformance_pack_name" {
-  description = "Name of the HIPAA conformance pack."
-  value       = module.audit.conformance_pack_name
-}
-
-output "remediation_rule_names" {
-  description = "Names of rules with attached remediation."
-  value       = module.audit.remediation_rule_names
-}
-
-output "custom_remediation_doc_name" {
-  description = "Name of the custom admin-port ingress remediation document."
-  value       = module.audit.custom_remediation_doc_name
-}
-
 output "guardduty_detector_id" {
   description = "GuardDuty detector ID."
   value       = module.detection.guardduty_detector_id
