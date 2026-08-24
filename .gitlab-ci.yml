@@ -1,19 +1,25 @@
-stages: # List of stages for jobs, and their order of execution
-  - build
+# Deployment pipeline for this repo. Set CI/CD variables:
+#   CI_ROLE_ARN       - ARN of the gitlab-ci role created by modules/ci
+#   CONFIG_BUCKET_ARN - ARN of the management-plane handoff config bucket
+#   DELETE_DEFAULT_VPCS - "1" to delete default VPCs in every account (opt-in)
 
-# variables:
-#   CI_DEBUG_TRACE: "true"
+stages:
+  - account-factory
+  - management-plane
+  - account-plane
+  - inventory
 
-debug-oidc:
-  stage: .pre
+variables:
+  AWS_DEFAULT_REGION: us-west-2
+
+.tofu:
   image:
     name: amazon/aws-cli:latest
-    entrypoint:
-      - ""
+    entrypoint: [""]
   id_tokens:
     OIDC_TOKEN:
       aud: https://gitlab.prolifel.com
-  script:
+  before_script:
     - |
       creds=$(aws sts assume-role-with-web-identity \
         --role-arn "$CI_ROLE_ARN" \
@@ -22,19 +28,74 @@ debug-oidc:
         --duration-seconds 3600 \
         --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]') || exit 1
     - export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-    - echo $(printf '%s' "$creds")
     - AWS_ACCESS_KEY_ID=$(printf '%s' "$creds" | jq '.[0]')
     - AWS_SECRET_ACCESS_KEY=$(printf '%s' "$creds" | jq '.[1]')
     - AWS_SESSION_TOKEN=$(printf '%s' "$creds" | jq '.[2]')
-    - echo $AWS_ACCESS_KEY_ID
-    - echo $AWS_SECRET_ACCESS_KEY
-    - echo $AWS_SESSION_TOKEN
+    - dnf install -y unzip
+    - curl -fsSL -o /tmp/tofu.zip https://github.com/opentofu/opentofu/releases/download/v1.8.0/tofu_1.8.0_linux_amd64.zip
+    - unzip -o /tmp/tofu.zip -d /usr/local/bin/
+
+provision:
+  extends: .tofu
+  stage: account-factory
+  resource_group: account-factory
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes:
+        - 02-accounts-creation/**
+  script:
+    - scripts/account-factory.sh --validate 02-accounts-creation
+    - scripts/account-factory.sh --diff 02-accounts-creation
+    - scripts/account-factory.sh 02-accounts-creation
   artifacts:
     paths:
-      - oidc_token.txt
-    expire_in: 10 mins
+      - account_ids.txt
+    expire_in: 1 day
 
-asu:
-  stage: build
+customize:
+  extends: .tofu
+  stage: account-plane
+  needs:
+    - provision
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes:
+        - 02-accounts-creation/**
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
   script:
-    - echo "ahay"
+    - |
+      if [[ ! -f account_ids.txt ]]; then
+        scripts/account-inventory.sh --json |
+          jq -r '.[] | select(.is_management == false) | .account_id' > account_ids.txt
+      fi
+      while read -r account_id; do
+        [[ -z "$account_id" ]] && continue
+        scripts/account-hardening.sh "$account_id"
+      done < account_ids.txt
+  artifacts:
+    paths:
+      - account_ids.txt
+    when: always
+    expire_in: 1 day
+
+management-plane:
+  extends: .tofu
+  stage: management-plane
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes:
+        - management/**
+  script:
+    - cd 01-management-init-role-and-hardening
+    - tofu init
+    - tofu apply -auto-approve
+
+inventory:
+  extends: .tofu
+  stage: inventory
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  script:
+    - scripts/account-inventory.sh --inventory
