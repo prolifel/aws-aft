@@ -22,6 +22,12 @@ variable "gitlab_url" {
   nullable    = false
 }
 
+variable "gitlab_branch" {
+  description = "Branch allowed to assume the GitLab CI role."
+  type        = string
+  nullable    = false
+}
+
 variable "gitlab_project_path" {
   description = "GitLab project path, e.g. prolifel/aws-aft."
   type        = string

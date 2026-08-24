@@ -12,6 +12,7 @@ module "hardened" {
   region                       = var.region
   tags                         = var.tags
   gitlab_url                   = var.gitlab_url
+  gitlab_branch                = var.gitlab_branch
   gitlab_project_path          = var.gitlab_project_path
   config_bucket_arn            = "arn:aws:s3:::${aws_s3_bucket.config.bucket}"
   ephp_ou_ids                  = var.ephp_ou_ids
