@@ -21,15 +21,20 @@ data "aws_iam_policy_document" "gitlab_ci_trust" {
       type        = "Federated"
       identifiers = [aws_iam_openid_connect_provider.gitlab[0].arn]
     }
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_host}:aud"
+      values   = [var.gitlab_url]
+    }
     # condition {
-    #   test     = "StringEquals"
-    #   variable = "${local.oidc_host}:aud"
-    #   values   = ["sts.amazonaws.com"]
+    #   test     = "StringLike"
+    #   variable = "${local.oidc_host}:sub"
+    #   values   = ["project_path:${var.gitlab_project_path}:ref_type:branch:ref:${var.gitlab_branch}"]
     # }
     condition {
       test     = "StringLike"
       variable = "${local.oidc_host}:sub"
-      values   = ["project_path:${var.gitlab_project_path}:ref_type:branch:ref:${var.gitlab_branch}"]
+      values   = ["project_path:${var.gitlab_project_path}:*"]
     }
   }
 }
