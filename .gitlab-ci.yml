@@ -29,6 +29,9 @@ debug-oidc:
     - AWS_ACCESS_KEY_ID=$creds[0]
     - AWS_SECRET_ACCESS_KEY=$creds[1]
     - AWS_SESSION_TOKEN=$creds[2]
+    - echo $AWS_ACCESS_KEY_ID
+    - echo $AWS_SECRET_ACCESS_KEY
+    - echo $AWS_SESSION_TOKEN
   artifacts:
     paths:
       - oidc_token.txt
