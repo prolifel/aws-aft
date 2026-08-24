@@ -21,11 +21,11 @@ data "aws_iam_policy_document" "gitlab_ci_trust" {
       type        = "Federated"
       identifiers = [aws_iam_openid_connect_provider.gitlab[0].arn]
     }
-    condition {
-      test     = "StringEquals"
-      variable = "${local.oidc_host}:aud"
-      values   = [local.oidc_host]
-    }
+    # condition {
+    #   test     = "StringEquals"
+    #   variable = "${local.oidc_host}:aud"
+    #   values   = ["sts.amazonaws.com"]
+    # }
     condition {
       test     = "StringLike"
       variable = "${local.oidc_host}:sub"
