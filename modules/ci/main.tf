@@ -24,7 +24,7 @@ data "aws_iam_policy_document" "gitlab_ci_trust" {
     condition {
       test     = "StringEquals"
       variable = "${local.oidc_host}:aud"
-      values   = [var.gitlab_url]
+      values   = [local.oidc_host]
     }
     condition {
       test     = "StringLike"
