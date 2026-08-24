@@ -81,3 +81,9 @@ variable "organization_id" {
   type        = string
   nullable    = false
 }
+
+variable "oidc_thumbprint" {
+  description = "oidc thumbprint"
+  type        = string
+  nullable    = false
+}
