@@ -86,7 +86,7 @@ management-plane:
     - if: '$CI_PIPELINE_SOURCE == "web"'
     - if: '$CI_PIPELINE_SOURCE == "push"'
       changes:
-        - management/**
+        - 01-management-init-role-and-hardening/**
   script:
     - cd 01-management-init-role-and-hardening
     - tofu init
