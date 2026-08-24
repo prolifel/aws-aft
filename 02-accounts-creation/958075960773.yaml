@@ -1,0 +1,9 @@
+account_name: "aft-management-account"
+email: "mencemaskan123+aft@gmail.com"
+managed_org_unit: "aft"
+sso_user_email: "mencemaskan123+aft@gmail.com"
+sso_user_first_name: "aft-management"
+sso_user_last_name: "account"
+account_tags:
+  Environment: Dev
+customizations: aws-hardened

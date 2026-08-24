@@ -30,7 +30,7 @@ parent_of() {
 }
 
 scps_of() {
-  aws organizations list-policies-for-target --target-id "$1" --filter SCP --output json |
+  aws organizations list-policies-for-target --target-id "$1" --filter SERVICE_CONTROL_POLICY --output json |
     jq -r '.Policies[].Name' | sort
 }
 

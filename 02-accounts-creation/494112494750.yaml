@@ -1,0 +1,9 @@
+account_name: "prolifel"
+email: "clement.085w@gmail.com"
+managed_org_unit: "production"
+sso_user_email: "clement.085w@gmail.com"
+sso_user_first_name: "prolifel"
+sso_user_last_name: ""
+account_tags:
+  Environment: Dev
+customizations: aws-hardened
