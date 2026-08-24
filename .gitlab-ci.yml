@@ -1,16 +1,22 @@
 stages: # List of stages for jobs, and their order of execution
   - build
 
+variables:
+  CI_DEBUG_TRACE: "true"
+
 debug-oidc:
   stage: .pre
-  image: amazon/aws-cli:latest
+  image:
+    name: amazon/aws-cli:latest
+    entrypoint:
+      - ""
   id_tokens:
     OIDC_TOKEN:
       aud: https://gitlab.prolifel.com
   script:
     - |
       creds=$(aws sts assume-role-with-web-identity \
-        --role-arn "arn:aws:iam::373901294232:role/test-vending-gitlab-ci" \
+        --role-arn "$CI_ROLE_ARN"" \
         --role-session-name "ci-$CI_PIPELINE_ID" \
         --web-identity-token "$OIDC_TOKEN" \
         --duration-seconds 3600 \
