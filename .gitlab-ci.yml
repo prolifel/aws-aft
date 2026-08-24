@@ -26,6 +26,7 @@ debug-oidc:
     # - AWS_ACCESS_KEY_ID=$(printf '%s' "$creds" | jq -r .Credentials.AccessKeyId)
     # - AWS_SECRET_ACCESS_KEY=$(printf '%s' "$creds" | jq -r .Credentials.SecretAccessKey)
     # - AWS_SESSION_TOKEN=$(printf '%s' "$creds" | jq -r .Credentials.SessionToken)
+    - echo $(printf '%s' "$creds" | jq -r)
     - AWS_ACCESS_KEY_ID=${creds[0]}
     - AWS_SECRET_ACCESS_KEY=${creds[1]}
     - AWS_SESSION_TOKEN=${creds[2]}
