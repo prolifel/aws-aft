@@ -3,7 +3,9 @@
 creds=$(aws sts assume-role-with-web-identity \
   --role-arn "$CI_ROLE_ARN" \
   --role-session-name "ci-$CI_PIPELINE_ID" \
-  --web-identity-token-file "$STS_WEB_IDENTITY_TOKEN_FILE") || exit 1
+  --web-identity-token ${GITLAB_OIDC_TOKEN} \
+  --duration-seconds 3600 \
+  --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]') || exit 1
 export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
 AWS_ACCESS_KEY_ID=$(printf '%s' "$creds" | jq -r .Credentials.AccessKeyId)
 AWS_SECRET_ACCESS_KEY=$(printf '%s' "$creds" | jq -r .Credentials.SecretAccessKey)
