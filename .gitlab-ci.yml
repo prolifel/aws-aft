@@ -16,7 +16,7 @@ debug-oidc:
   script:
     - |
       creds=$(aws sts assume-role-with-web-identity \
-        --role-arn "$CI_ROLE_ARN"" \
+        --role-arn "$CI_ROLE_ARN" \
         --role-session-name "ci-$CI_PIPELINE_ID" \
         --web-identity-token "$OIDC_TOKEN" \
         --duration-seconds 3600 \
