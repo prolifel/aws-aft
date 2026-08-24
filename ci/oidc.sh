@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 # Sourced by CI jobs. Requires CI_ROLE_ARN variable and id_token OIDC_TOKEN.
+echo "$OIDC_TOKEN" | cut -d. -f2 | base64 -d | jq .
 creds=$(aws sts assume-role-with-web-identity \
   --role-arn "$CI_ROLE_ARN" \
   --role-session-name "ci-$CI_PIPELINE_ID" \

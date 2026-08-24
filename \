@@ -1,0 +1,11 @@
+fix: mboh
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# On branch main
+# Changes to be committed:
+#	modified:   .gitlab-ci.yml
+#	modified:   02-accounts-creation/958075960773.yaml
+#	modified:   ci/oidc.sh
+#	modified:   modules/ci/main.tf
+#
