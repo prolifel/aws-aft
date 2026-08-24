@@ -28,9 +28,9 @@ variables:
         --duration-seconds 3600 \
         --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]') || exit 1
     - export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-    - AWS_ACCESS_KEY_ID=$(printf '%s' "$creds" | jq '.[0]')
-    - AWS_SECRET_ACCESS_KEY=$(printf '%s' "$creds" | jq '.[1]')
-    - AWS_SESSION_TOKEN=$(printf '%s' "$creds" | jq '.[2]')
+    - AWS_ACCESS_KEY_ID=$(printf '%s' "$creds" | jq -r '.[0]')
+    - AWS_SECRET_ACCESS_KEY=$(printf '%s' "$creds" | jq -r '.[1]')
+    - AWS_SESSION_TOKEN=$(printf '%s' "$creds" | jq -r '.[2]')
     - dnf install -y unzip
     - curl -fsSL -o /tmp/tofu.zip https://github.com/opentofu/opentofu/releases/download/v1.8.0/tofu_1.8.0_linux_amd64.zip
     - unzip -o /tmp/tofu.zip -d /usr/local/bin/
