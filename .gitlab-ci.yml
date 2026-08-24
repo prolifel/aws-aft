@@ -18,7 +18,7 @@ variables:
     OIDC_TOKEN:
       aud: sts.amazonaws.com
   before_script:
-    - sudo apt-get update && sudo apt-get install jq curl unzip
+    - apk add --no-cache aws-cli jq curl unzip
     - source ci/oidc.sh
 
 .tofu:
@@ -27,7 +27,7 @@ variables:
     OIDC_TOKEN:
       aud: sts.amazonaws.com
   before_script:
-    - sudo apt-get update && sudo apt-get install jq curl unzip
+    - apk add --no-cache aws-cli jq curl unzip
     - source ci/oidc.sh
     - curl -fsSL -o /tmp/tofu.zip https://github.com/opentofu/opentofu/releases/download/v1.8.0/tofu_1.8.0_linux_amd64.zip
     - unzip -o /tmp/tofu.zip -d /usr/local/bin/
