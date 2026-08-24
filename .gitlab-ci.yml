@@ -50,9 +50,9 @@ provision:
       changes:
         - 02-accounts-creation/**
   script:
-    - scripts/account-factory.sh --validate accounts
-    - scripts/account-factory.sh --diff accounts
-    - scripts/account-factory.sh accounts
+    - scripts/account-factory.sh --validate 02-accounts-creation
+    - scripts/account-factory.sh --diff 02-accounts-creation
+    - scripts/account-factory.sh 02-accounts-creation
   artifacts:
     paths:
       - account_ids.txt
