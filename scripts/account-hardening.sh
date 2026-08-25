@@ -37,8 +37,8 @@ if [[ -n "$json" ]]; then
   use_creds "$json"
 else
   echo "bootstrapping $DEPLOY_ROLE in $ACCOUNT_ID via $CT_EXEC_ROLE" >&2
-  use_creds "$(assume_role "arn:aws:iam::${ACCOUNT_ID}:role/${CT_EXEC_ROLE}")"
   (
+    use_creds "$(assume_role "arn:aws:iam::${ACCOUNT_ID}:role/${CT_EXEC_ROLE}")"
     cd "$BOOTSTRAP_DIR"
     tofu init -backend-config="key=${ACCOUNT_ID}/account-init-role.tfstate"
     tofu apply -auto-approve -var "gitlab_ci_role_arn=${CI_ROLE_ARN:?set CI_ROLE_ARN}"
