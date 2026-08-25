@@ -15,7 +15,7 @@ command -v jq >/dev/null 2>&1 || { echo "ERROR: jq is required" >&2; exit 2; }
 [[ -n "$PRODUCT_ID" ]] || { echo "ERROR: ACCOUNT_FACTORY_PRODUCT_ID is required" >&2; exit 2; }
 
 mkdir -p "$REPORT_DIR"
-mapfile -t files < <(find "$REQUEST_DIR" -maxdepth 1 -name '*.yaml' | sort)
+mapfile -t files < <(find "$REQUEST_DIR" -maxdepth 1 -name '*.yaml' ! -name '.ignored-accounts.yaml' | sort)
 if [[ ${#files[@]} -eq 0 ]]; then
   printf '[]\n' > "$REPORT_PATH"
   echo "no request files"
