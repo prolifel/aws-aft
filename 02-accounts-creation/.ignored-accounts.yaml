@@ -1,3 +1,4 @@
 # AWS accounts present in the organization but intentionally not managed by this repo.
 # List each as {email, reason}. Discovery fails if an unlisted account has no request.
-[]
+- email: mencemaskan123@gmail.com
+  reason: Control Tower management account, not used by this repo

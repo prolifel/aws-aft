@@ -9,8 +9,7 @@ stages:
   - bootstrap
 
 variables:
-  AWS_DEFAULT_REGION: ap-southeast-3
-  STATE_REGION: ap-southeast-3
+  AWS_DEFAULT_REGION: us-west-2
 
 .tofu:
   image:

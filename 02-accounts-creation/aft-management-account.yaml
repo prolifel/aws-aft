@@ -1,0 +1,11 @@
+account_name: aft-management-account
+email: mencemaskan123+aft@gmail.com
+managed_org_unit: aft
+owner: platform-team
+environment: prod
+cost_center: XAAFT
+regions:
+  - us-west-2
+tags:
+  Application: workload
+  DataClassification: confidential

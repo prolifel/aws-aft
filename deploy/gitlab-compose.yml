@@ -1,15 +1,23 @@
 services:
   gitlab:
-    image: gitlab/gitlab-ce:19.0.6-ce.0
+    image: gitlab/gitlab-ce:19.2.4-ce.0
     container_name: gitlab
     restart: always
-    hostname: "gitlab.example.com"
+    hostname: "172.17.2.8"
     networks:
       - nginx_proxy
     environment:
       GITLAB_OMNIBUS_CONFIG: |
         # Add any other gitlab.rb configuration here, each on its own line
-        # external_url 'https://gitlab.example.com'
+        external_url 'https://gitlab.prolifel.com/'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+        nginx['listen_port'] = 80
+        nginx['listen_https'] = false
+        letsencrypt['enable'] = false
+        nginx['proxy_set_headers'] = {
+          "X-Forwarded-Proto" => "https",
+          "X-Forwarded-Ssl" => "on"
+        }
     ports:
       - "6080:80"
       - "6443:443"

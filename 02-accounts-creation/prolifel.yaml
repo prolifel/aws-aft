@@ -1,0 +1,11 @@
+account_name: prolifel
+email: clement.085w@gmail.com
+managed_org_unit: production
+owner: platform-team
+environment: prod
+cost_center: XACASD
+regions:
+  - us-west-2
+tags:
+  Application: workload
+  DataClassification: confidential

@@ -1,0 +1,11 @@
+account_name: security-and-aggregator
+email: mencemaskan123+security-v2@gmail.com
+managed_org_unit: security
+owner: security-team
+environment: prod
+cost_center: XASECAGGR
+regions:
+  - us-west-2
+tags:
+  Application: workload
+  DataClassification: confidential
