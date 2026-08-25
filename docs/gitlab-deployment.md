@@ -11,6 +11,11 @@ separate repository and are out of scope here.
 - `STATE_BUCKET` — central state bucket (output of `00-backend`)
 - `STATE_REGION` — state bucket region (default `ap-southeast-3`)
 - `ACCOUNT_FACTORY_PRODUCT_ID` — Service Catalog product ID of Control Tower Account Factory
+- Bootstrap contact vars — `security_contact_name`, `security_contact_email`,
+  `security_contact_phone`, `billing_contact_name`, `billing_contact_email`,
+  `billing_contact_phone`, `operations_contact_name`, `operations_contact_email`,
+  `operations_contact_phone` (central org constants; written to
+  `pipeline/account-bootstrap/base.tfvars` by `scripts/account-bootstrap.sh`)
 
 ## Pipeline stages
 

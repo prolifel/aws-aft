@@ -3,6 +3,8 @@
 #   STATE_BUCKET               - central state bucket (output of 00-backend)
 #   STATE_REGION               - state bucket region (default ap-southeast-3)
 #   ACCOUNT_FACTORY_PRODUCT_ID - Service Catalog product ID of Control Tower Account Factory
+#   security_contact_{name,email,phone} billing_contact_{name,email,phone}
+#   operations_contact_{name,email,phone} - bootstrap alternate contact values
 stages:
   - validate
   - provision

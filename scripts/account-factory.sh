@@ -47,7 +47,7 @@ for file in "${files[@]}"; do
   else
     key="account-vending/$name/terraform.tfstate"
     echo "vending $name"
-    if (cd "$ROOT/pipeline/account-vending" && tofu init -input=false \
+    if (cd "$ROOT/pipeline/account-vending" && tofu init -input=false -reconfigure \
           -backend-config="bucket=$STATE_BUCKET" \
           -backend-config="key=$key" \
           -backend-config="region=$STATE_REGION" >/dev/null \
