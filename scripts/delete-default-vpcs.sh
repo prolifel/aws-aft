@@ -23,5 +23,12 @@ for region in $regions; do
       --internet-gateway-id "$igw" --vpc-id "$vpc_id"
     aws ec2 delete-internet-gateway --region "$region" --internet-gateway-id "$igw"
   done
-  aws ec2 delete-vpc --region "$region" --vpc-id "$vpc_id"
+  if aws ec2 delete-vpc --region "$region" --vpc-id "$vpc_id"; then
+    continue
+  fi
+  sleep 5
+  if aws ec2 delete-vpc --region "$region" --vpc-id "$vpc_id"; then
+    continue
+  fi
+  echo "WARNING: skipping VPC $vpc_id in $region; delete-vpc still failed (dependencies may still exist)" >&2
 done
