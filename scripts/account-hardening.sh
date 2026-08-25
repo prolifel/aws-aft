@@ -19,6 +19,10 @@ use_creds() {
   AWS_ACCESS_KEY_ID=$(jq -r .Credentials.AccessKeyId <<<"$json")
   AWS_SECRET_ACCESS_KEY=$(jq -r .Credentials.SecretAccessKey <<<"$json")
   AWS_SESSION_TOKEN=$(jq -r .Credentials.SessionToken <<<"$json")
+  aws sts get-caller-identity --output json >/dev/null || {
+    echo "ERROR: assume-role credentials rejected by STS (access_key=${AWS_ACCESS_KEY_ID:0:4}..., session_token_len=${#AWS_SESSION_TOKEN})" >&2
+    exit 1
+  }
 }
 
 json=$(assume_role "arn:aws:iam::${ACCOUNT_ID}:role/${DEPLOY_ROLE}" 2>/dev/null) ||
