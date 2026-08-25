@@ -2,3 +2,7 @@
 # List each as {email, reason}. Discovery fails if an unlisted account has no request.
 - email: mencemaskan123@gmail.com
   reason: Control Tower management account, not used by this repo
+- email: mencemaskan123+aggregator@gmail.com
+  reason: Suspended account
+- email: mencemaskan123+security@gmail.com
+  reason: Suspended account
