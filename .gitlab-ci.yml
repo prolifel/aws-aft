@@ -22,7 +22,7 @@ variables:
     - |
       set -e
       command -v dnf >/dev/null 2>&1 || true
-      dnf install -y unzip jq >/dev/null 2>&1 || true
+      dnf install -y unzip jq ruby >/dev/null 2>&1 || true
       curl -fsSL -o /tmp/tofu.zip https://github.com/opentofu/opentofu/releases/download/v1.8.0/tofu_1.8.0_linux_amd64.zip
       unzip -o /tmp/tofu.zip -d /usr/local/bin/
       command -v yq >/dev/null 2>&1 || { curl -fsSL -o /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64; chmod +x /usr/local/bin/yq; }
