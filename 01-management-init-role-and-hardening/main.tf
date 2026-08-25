@@ -63,7 +63,7 @@ resource "aws_s3_bucket_policy" "config" {
 data "aws_iam_policy_document" "config" {
   statement {
     effect    = "Allow"
-    actions   = ["s3:GetObject"]
+    actions   = ["s3:GetObject", "s3:GetObjectTagging"]
     resources = ["${aws_s3_bucket.config.arn}/*"]
     principals {
       type        = "AWS"
