@@ -6,5 +6,5 @@ module "ci" {
   region              = var.region
   gitlab_url          = var.gitlab_url
   gitlab_project_path = var.gitlab_project_path
-  state_bucket_arn    = var.state_bucket_arn
+  state_bucket_name   = var.state_bucket_name
 }

@@ -1,6 +1,7 @@
 locals {
-  ci_enabled = var.enabled && var.management_account
-  oidc_host  = replace(var.gitlab_url, "https://", "")
+  ci_enabled       = var.enabled && var.management_account
+  oidc_host        = replace(var.gitlab_url, "https://", "")
+  state_bucket_arn = "arn:aws:s3:::${var.state_bucket_name}"
 }
 
 resource "aws_iam_openid_connect_provider" "gitlab" {
@@ -77,7 +78,7 @@ data "aws_iam_policy_document" "vending" {
       "s3:DeleteObject",
       "s3:ListBucket",
     ]
-    resources = [var.state_bucket_arn, "${var.state_bucket_arn}/*"]
+    resources = [local.state_bucket_arn, "${local.state_bucket_arn}/*"]
   }
 
   dynamic "statement" {

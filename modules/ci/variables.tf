@@ -49,8 +49,8 @@ variable "oidc_thumbprint" {
   default     = null
 }
 
-variable "state_bucket_arn" {
-  description = "ARN of the central OpenTofu state bucket."
+variable "state_bucket_name" {
+  description = "Name of the central OpenTofu state bucket."
   type        = string
   nullable    = false
 }

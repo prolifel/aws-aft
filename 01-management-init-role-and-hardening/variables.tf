@@ -22,8 +22,8 @@ variable "gitlab_project_path" {
   nullable    = false
 }
 
-variable "state_bucket_arn" {
-  description = "ARN of the central OpenTofu state bucket."
+variable "state_bucket_name" {
+  description = "Name of the central OpenTofu state bucket."
   type        = string
   nullable    = false
 }
