@@ -60,3 +60,11 @@ The team accountable for a vended account.
 
 **Cost Center**:
 The billing and accountability value attached to a vended account.
+
+**Per-Account Variable**:
+A root variable that varies per account request and is fed by the deployment var-file or `-var` flags.
+_Avoid_: passthrough
+
+**Org-Wide Constant**:
+A value identical for every account; lives as a literal in the root's module call or as a module default.
+_Avoid_: base config
