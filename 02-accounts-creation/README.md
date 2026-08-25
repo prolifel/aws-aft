@@ -1,10 +1,11 @@
 # Account requests
 
-One YAML file per account. Generate with:
+One declarative YAML file per account. See `template.yaml` for the full schema.
 
-```sh
-scripts/account-inventory.sh --aft-requests 02-accounts-creation
-```
+- `account_name`, `email`, `managed_org_unit` are identity: immutable after vending.
+- OU moves are explicit, reviewed operations.
+- Deleting a request archives the account; it never deletes the AWS account.
+- Metadata (`owner`, `environment`, `cost_center`, `regions`, `tags`) reconciles.
+- Accounts present in AWS with no request are validation failures unless listed in `.ignored-accounts.yaml`.
 
-Merge triggers the `provision` pipeline job. Format and lifecycle:
-`docs/gitlab-deployment.md`.
+Lifecycle and pipeline: `docs/gitlab-deployment.md`.

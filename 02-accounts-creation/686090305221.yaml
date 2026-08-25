@@ -1,9 +1,0 @@
-account_name: "security-and-aggregator"
-email: "mencemaskan123+security-v2@gmail.com"
-managed_org_unit: "Security"
-sso_user_email: "mencemaskan123+security-v2@gmail.com"
-sso_user_first_name: "security-and"
-sso_user_last_name: "aggregator"
-account_tags:
-  Environment: Dev
-customizations: aws-hardened

@@ -1,9 +1,0 @@
-account_name: "security"
-email: "mencemaskan123+cloudsecurity@gmail.com"
-managed_org_unit: "Security"
-sso_user_email: "mencemaskan123+cloudsecurity@gmail.com"
-sso_user_first_name: "security"
-sso_user_last_name: ""
-account_tags:
-  Environment: Dev
-customizations: aws-hardened

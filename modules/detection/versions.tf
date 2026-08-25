@@ -1,9 +1,0 @@
-terraform {
-  required_providers {
-    aws = {
-      source                = "hashicorp/aws"
-      version               = "6.58.0"
-      configuration_aliases = [aws, aws.delegated_admin]
-    }
-  }
-}

@@ -1,9 +1,9 @@
 output "gitlab_ci_role_arn" {
-  description = "ARN of the gitlab-ci role. Set this as the CI_ROLE_ARN GitLab variable."
-  value       = module.hardened.gitlab_ci_role_arn
+  description = "ARN of the GitLab CI role; configure it as CI_ROLE_ARN."
+  value       = module.ci.gitlab_ci_role_arn
 }
 
-output "state_bucket_name" {
-  description = "Name of the handoff config bucket."
-  value       = aws_s3_bucket.config.id
+output "oidc_provider_arn" {
+  description = "ARN of the GitLab OIDC provider."
+  value       = module.ci.oidc_provider_arn
 }

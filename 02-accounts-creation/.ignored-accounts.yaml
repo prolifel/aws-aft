@@ -1,0 +1,3 @@
+# AWS accounts present in the organization but intentionally not managed by this repo.
+# List each as {email, reason}. Discovery fails if an unlisted account has no request.
+[]

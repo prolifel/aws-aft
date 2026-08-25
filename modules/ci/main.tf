@@ -8,7 +8,7 @@ resource "aws_iam_openid_connect_provider" "gitlab" {
 
   url             = var.gitlab_url
   client_id_list  = [var.gitlab_url]
-  thumbprint_list = var.oidc_thumbprint != null ? [var.oidc_thumbprint] : []
+  thumbprint_list = var.oidc_thumbprint == null ? [] : [var.oidc_thumbprint]
 }
 
 data "aws_iam_policy_document" "gitlab_ci_trust" {
@@ -17,24 +17,25 @@ data "aws_iam_policy_document" "gitlab_ci_trust" {
   statement {
     effect  = "Allow"
     actions = ["sts:AssumeRoleWithWebIdentity"]
+
     principals {
       type        = "Federated"
       identifiers = [aws_iam_openid_connect_provider.gitlab[0].arn]
     }
+
     condition {
       test     = "StringEquals"
       variable = "${local.oidc_host}:aud"
       values   = [var.gitlab_url]
     }
-    # condition {
-    #   test     = "StringLike"
-    #   variable = "${local.oidc_host}:sub"
-    #   values   = ["project_path:${var.gitlab_project_path}:ref_type:branch:ref:${var.gitlab_branch}"]
-    # }
+
     condition {
       test     = "StringLike"
       variable = "${local.oidc_host}:sub"
-      values   = ["project_path:${var.gitlab_project_path}:*"]
+      values = [
+        "project_path:${var.gitlab_project_path}:ref_type:branch:ref:${var.gitlab_branch}",
+        "project_path:${var.gitlab_project_path}:ref_type:merge_request_event:ref:*",
+      ]
     }
   }
 }
@@ -47,102 +48,57 @@ resource "aws_iam_role" "gitlab_ci" {
   tags               = var.tags
 }
 
-data "aws_iam_policy_document" "servicecatalog" {
+data "aws_iam_policy_document" "vending" {
   count = local.ci_enabled ? 1 : 0
 
   statement {
     effect = "Allow"
     actions = [
       "servicecatalog:DescribeProduct",
-      "servicecatalog:DescribeProductAsAdmin",
       "servicecatalog:DescribeProvisionedProduct",
       "servicecatalog:ListProvisioningArtifacts",
       "servicecatalog:ProvisionProduct",
-      "servicecatalog:SearchProductsAsAdmin",
-      "servicecatalog:TerminateProvisionedProduct",
       "servicecatalog:UpdateProvisionedProduct",
+      "organizations:DescribeOrganization",
+      "organizations:ListAccounts",
+      "organizations:ListChildren",
+      "organizations:ListOrganizationalUnitsForParent",
+      "organizations:ListRoots",
+      "sts:AssumeRole",
     ]
     resources = ["*"]
   }
-}
-
-data "aws_iam_policy_document" "management_plane" {
-  count = local.ci_enabled ? 1 : 0
 
   statement {
     effect = "Allow"
     actions = [
-      "cloudtrail:*",
-      "config:*",
-      "ec2:*",
-      "guardduty:*",
-      "iam:*",
-      "identitystore:*",
-      "inspector2:*",
-      "kms:*",
-      "logs:*",
-      "macie2:*",
-      "organizations:*",
-      "s3:*",
-      "securityhub:*",
-      "sns:*",
-      "sso-admin:*",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+      "s3:ListBucket",
     ]
-    resources = ["*"]
+    resources = [var.state_bucket_arn, "${var.state_bucket_arn}/*"]
+  }
+
+  dynamic "statement" {
+    for_each = var.state_kms_key_arn == "" ? [] : [var.state_kms_key_arn]
+    content {
+      effect = "Allow"
+      actions = [
+        "kms:Decrypt",
+        "kms:Encrypt",
+        "kms:GenerateDataKey",
+        "kms:DescribeKey",
+      ]
+      resources = [statement.value]
+    }
   }
 }
 
-data "aws_iam_policy_document" "config_bucket" {
-  count = local.ci_enabled && var.config_bucket_arn != "" ? 1 : 0
-
-  statement {
-    effect    = "Allow"
-    actions   = ["s3:GetObject"]
-    resources = ["${var.config_bucket_arn}/*"]
-  }
-}
-
-data "aws_iam_policy_document" "cross_account" {
+resource "aws_iam_role_policy" "vending" {
   count = local.ci_enabled ? 1 : 0
 
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
-    resources = [
-      "arn:aws:iam::*:role/AWSControlTowerExecution",
-      "arn:aws:iam::*:role/${var.deploy_role_name}",
-    ]
-  }
-}
-
-resource "aws_iam_role_policy" "servicecatalog" {
-  count = local.ci_enabled ? 1 : 0
-
-  name   = "servicecatalog"
+  name   = "account-vending"
   role   = aws_iam_role.gitlab_ci[0].name
-  policy = data.aws_iam_policy_document.servicecatalog[0].json
-}
-
-resource "aws_iam_role_policy" "management_plane" {
-  count = local.ci_enabled ? 1 : 0
-
-  name   = "management-plane"
-  role   = aws_iam_role.gitlab_ci[0].name
-  policy = data.aws_iam_policy_document.management_plane[0].json
-}
-
-resource "aws_iam_role_policy" "config_bucket" {
-  count = local.ci_enabled && var.config_bucket_arn != "" ? 1 : 0
-
-  name   = "config-bucket"
-  role   = aws_iam_role.gitlab_ci[0].name
-  policy = data.aws_iam_policy_document.config_bucket[0].json
-}
-
-resource "aws_iam_role_policy" "cross_account" {
-  count = local.ci_enabled ? 1 : 0
-
-  name   = "cross-account"
-  role   = aws_iam_role.gitlab_ci[0].name
-  policy = data.aws_iam_policy_document.cross_account[0].json
+  policy = data.aws_iam_policy_document.vending[0].json
 }

@@ -7,7 +7,7 @@ locals {
 }
 
 resource "aws_s3_bucket" "state" {
-  bucket        = "aws-hardened-state-${local.account_id}-${var.region}"
+  bucket        = "aws-vending-state-${local.account_id}-${var.region}"
   force_destroy = false
 }
 

@@ -1,6 +1,5 @@
 terraform {
   required_version = ">= 1.8.0"
-  backend "s3" {}
 
   required_providers {
     aws = {
@@ -8,8 +7,4 @@ terraform {
       version = "6.58.0"
     }
   }
-}
-
-provider "aws" {
-  region = var.region
 }

@@ -1,3 +1,5 @@
-# Centralize AWS Config via Control Tower delegated admin
+# Replace AWS Config via Control Tower delegation
 
-AWS Config was previously provisioned per account by this repo's `audit` module (recorder, delivery channel, 13 managed rules, auto-remediations, and a HIPAA conformance pack), alongside an Object Lock log bucket that also served org CloudTrail delivery. We decided to remove all Config and log-bucket infrastructure from this repo: Config is now centralized via a Control Tower delegated admin account managed by a separate repo, and CloudTrail remains managed by Control Tower. Control Tower managed controls are detective only, so the SSM-based auto-remediations were removed rather than re-homed; per-account Config snapshots no longer deliver into this repo's log bucket, and the `config.json` handoff was reduced to break-glass and delegated-admin account IDs. This is a boundary and scope decision: this repo no longer owns audit logging or Config rule enforcement.
+# Superseded by ADR-0002 (vending-only scope) and ADR-0004 (no CloudFormation/native OpenTofu baseline).
+
+This repo was previously hardened with AWS Config centralized through a Control Tower delegated admin. As of the vending-only reconstruction, this repo no longer owns AWS Config, audit logging, or Config rule enforcement; those concerns are managed in a separate repo.

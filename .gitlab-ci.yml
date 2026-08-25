@@ -1,16 +1,16 @@
-# Deployment pipeline for this repo. Set CI/CD variables:
-#   CI_ROLE_ARN       - ARN of the gitlab-ci role created by modules/ci
-#   CONFIG_BUCKET_ARN - ARN of the management-plane handoff config bucket
-#   DELETE_DEFAULT_VPCS - "1" to delete default VPCs in every account (opt-in)
-
+# Account vending pipeline. Required CI/CD variables:
+#   CI_ROLE_ARN                - ARN of the gitlab-ci role (output of 01-management-init-role-and-hardening)
+#   STATE_BUCKET               - central state bucket (output of 00-backend)
+#   STATE_REGION               - state bucket region (default ap-southeast-3)
+#   ACCOUNT_FACTORY_PRODUCT_ID - Service Catalog product ID of Control Tower Account Factory
 stages:
-  - account-factory
-  - management-plane
-  - account-plane
-  - inventory
+  - validate
+  - provision
+  - bootstrap
 
 variables:
-  AWS_DEFAULT_REGION: us-west-2
+  AWS_DEFAULT_REGION: ap-southeast-3
+  STATE_REGION: ap-southeast-3
 
 .tofu:
   image:
@@ -21,81 +21,63 @@ variables:
       aud: https://gitlab.prolifel.com
   before_script:
     - |
+      set -e
+      command -v dnf >/dev/null 2>&1 || true
+      dnf install -y unzip jq >/dev/null 2>&1 || true
+      curl -fsSL -o /tmp/tofu.zip https://github.com/opentofu/opentofu/releases/download/v1.8.0/tofu_1.8.0_linux_amd64.zip
+      unzip -o /tmp/tofu.zip -d /usr/local/bin/
+      command -v yq >/dev/null 2>&1 || { curl -fsSL -o /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64; chmod +x /usr/local/bin/yq; }
       creds=$(aws sts assume-role-with-web-identity \
         --role-arn "$CI_ROLE_ARN" \
         --role-session-name "ci-$CI_PIPELINE_ID" \
         --web-identity-token "$OIDC_TOKEN" \
         --duration-seconds 3600 \
-        --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]') || exit 1
-    - export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-    - AWS_ACCESS_KEY_ID=$(printf '%s' "$creds" | jq -r '.[0]')
-    - AWS_SECRET_ACCESS_KEY=$(printf '%s' "$creds" | jq -r '.[1]')
-    - AWS_SESSION_TOKEN=$(printf '%s' "$creds" | jq -r '.[2]')
-    - dnf install -y unzip
-    - curl -fsSL -o /tmp/tofu.zip https://github.com/opentofu/opentofu/releases/download/v1.8.0/tofu_1.8.0_linux_amd64.zip
-    - unzip -o /tmp/tofu.zip -d /usr/local/bin/
+        --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text)
+      read -r AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN <<<"$creds"
+      export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+
+validate:
+  extends: .tofu
+  stage: validate
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - 02-accounts-creation/**
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes:
+        - 02-accounts-creation/**
+  script:
+    - scripts/validate-accounts.sh 02-accounts-creation
+  artifacts:
+    paths:
+      - account-reports/validation.json
+    expire_in: 1 day
 
 provision:
   extends: .tofu
-  stage: account-factory
-  resource_group: account-factory
+  stage: provision
+  resource_group: account-vending
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
       changes:
         - 02-accounts-creation/**
   script:
-    - scripts/account-factory.sh --validate 02-accounts-creation
-    - scripts/account-factory.sh --diff 02-accounts-creation
-    - scripts/account-factory.sh run 02-accounts-creation
+    - scripts/account-factory.sh 02-accounts-creation
   artifacts:
     paths:
-      - account_ids.txt
+      - account-reports/account-factory.json
     expire_in: 1 day
 
-customize:
+bootstrap:
   extends: .tofu
-  stage: account-plane
+  stage: bootstrap
+  resource_group: account-bootstrap
   needs:
     - provision
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-      changes:
-        - 02-accounts-creation/**
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
   script:
-    - |
-      if [[ ! -f account_ids.txt ]]; then
-        scripts/account-inventory.sh --json |
-          jq -r '.[] | select(.is_management == false) | .account_id' > account_ids.txt
-      fi
-      while read -r account_id; do
-        [[ -z "$account_id" ]] && continue
-        scripts/account-hardening.sh "$account_id"
-      done < account_ids.txt
+    - scripts/account-bootstrap.sh
   artifacts:
-    paths:
-      - account_ids.txt
     when: always
+    paths:
+      - account-reports/bootstrap*.json
     expire_in: 1 day
-
-management-plane:
-  extends: .tofu
-  stage: management-plane
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-      changes:
-        - 01-management-init-role-and-hardening/**
-  script:
-    - cd 01-management-init-role-and-hardening
-    - tofu init
-    - tofu apply -auto-approve
-
-inventory:
-  extends: .tofu
-  stage: inventory
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-  script:
-    - scripts/account-inventory.sh --inventory

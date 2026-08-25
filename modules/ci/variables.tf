@@ -5,12 +5,17 @@ variable "enabled" {
 }
 
 variable "management_account" {
-  description = "Whether this module runs in the organization management account."
+  description = "Whether this module runs in the Control Tower management account."
   type        = bool
 }
 
 variable "name_prefix" {
   description = "Prefix for the GitLab CI role name."
+  type        = string
+}
+
+variable "region" {
+  description = "AWS region for management-plane resources."
   type        = string
 }
 
@@ -21,37 +26,37 @@ variable "tags" {
 }
 
 variable "gitlab_url" {
-  description = "GitLab OIDC issuer base URL, e.g. https://gitlab.example.com."
+  description = "GitLab OIDC issuer base URL."
   type        = string
   nullable    = false
 }
 
 variable "gitlab_project_path" {
-  description = "GitLab project path for the OIDC sub trust condition, e.g. prolifel/aws-aft."
+  description = "GitLab project path allowed to assume the CI role."
   type        = string
   nullable    = false
 }
 
 variable "gitlab_branch" {
-  description = "Branch allowed to assume the GitLab CI role."
+  description = "GitLab branch allowed to assume the CI role."
   type        = string
   default     = "main"
 }
 
 variable "oidc_thumbprint" {
-  description = "Optional SHA-1 thumbprint of the OIDC issuer cert. Empty lets AWS auto-fetch."
+  description = "Optional SHA-1 thumbprint of the GitLab OIDC issuer certificate."
   type        = string
   default     = null
 }
 
-variable "deploy_role_name" {
-  description = "Per-account role name the GitLab CI role may assume."
+variable "state_bucket_arn" {
+  description = "ARN of the central OpenTofu state bucket."
   type        = string
-  default     = "hardened-deploy"
+  nullable    = false
 }
 
-variable "config_bucket_arn" {
-  description = "ARN of the handoff config bucket. Empty skips the s3:GetObject policy."
+variable "state_kms_key_arn" {
+  description = "ARN of the KMS key protecting the central state bucket, if used."
   type        = string
   default     = ""
 }
