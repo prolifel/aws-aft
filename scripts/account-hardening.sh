@@ -16,9 +16,13 @@ assume_role() {
 use_creds() {
   local json="$1"
   export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-  AWS_ACCESS_KEY_ID=$(jq -r .Credentials.AccessKeyId <<<"$json")
-  AWS_SECRET_ACCESS_KEY=$(jq -r .Credentials.SecretAccessKey <<<"$json")
-  AWS_SESSION_TOKEN=$(jq -r .Credentials.SessionToken <<<"$json")
+  AWS_ACCESS_KEY_ID=$(jq -r '.Credentials.AccessKeyId // empty' <<<"$json")
+  AWS_SECRET_ACCESS_KEY=$(jq -r '.Credentials.SecretAccessKey // empty' <<<"$json")
+  AWS_SESSION_TOKEN=$(jq -r '.Credentials.SessionToken // empty' <<<"$json")
+  if [[ -z "$AWS_ACCESS_KEY_ID" || -z "$AWS_SECRET_ACCESS_KEY" || -z "$AWS_SESSION_TOKEN" ]]; then
+    echo "ERROR: assume-role returned incomplete credentials: ${json:0:200}" >&2
+    exit 1
+  fi
   aws sts get-caller-identity --output json >/dev/null || {
     echo "ERROR: assume-role credentials rejected by STS (access_key=${AWS_ACCESS_KEY_ID:0:4}..., session_token_len=${#AWS_SESSION_TOKEN})" >&2
     exit 1
